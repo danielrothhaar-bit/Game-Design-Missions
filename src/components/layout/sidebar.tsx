@@ -1,11 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import {
-  BarChart3,
-  Briefcase,
-  LayoutGrid,
-  Plus,
-  Trophy,
-} from "lucide-react";
+import { Plus, Trophy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
@@ -46,12 +42,12 @@ export function Sidebar({
         <div className="mb-3">
           <SidebarLink
             href="/my-work"
-            icon={Briefcase}
+            icon="briefcase"
             label="My Work"
             exact
           />
-          <SidebarLink href="/dashboard" icon={BarChart3} label="Dashboard" />
-          <SidebarLink href="/games" icon={LayoutGrid} label="All Games" exact />
+          <SidebarLink href="/dashboard" icon="dashboard" label="Dashboard" />
+          <SidebarLink href="/games" icon="grid" label="All Games" exact />
         </div>
 
         <div className="mt-4">

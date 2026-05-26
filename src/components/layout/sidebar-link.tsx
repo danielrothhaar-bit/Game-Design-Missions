@@ -2,24 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BarChart3, Briefcase, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+
+// Icons live here (a Client Component) keyed by string. Server Components
+// can't pass component functions across the boundary, so the sidebar passes
+// a string key instead.
+const ICONS = {
+  briefcase: Briefcase,
+  dashboard: BarChart3,
+  grid: LayoutGrid,
+} as const;
+
+export type SidebarIcon = keyof typeof ICONS;
 
 export function SidebarLink({
   href,
-  icon: Icon,
+  icon,
   label,
   exact = false,
-  trailing,
 }: {
   href: string;
-  icon: LucideIcon;
+  icon: SidebarIcon;
   label: string;
   exact?: boolean;
-  trailing?: React.ReactNode;
 }) {
   const pathname = usePathname();
   const active = exact ? pathname === href : pathname.startsWith(href);
+  const Icon = ICONS[icon];
   return (
     <Link
       href={href}
@@ -32,7 +42,6 @@ export function SidebarLink({
     >
       <Icon className="size-4 shrink-0 opacity-80" />
       <span className="truncate">{label}</span>
-      {trailing ? <span className="ml-auto">{trailing}</span> : null}
     </Link>
   );
 }
