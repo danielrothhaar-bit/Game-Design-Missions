@@ -1,0 +1,68 @@
+import { notFound } from "next/navigation";
+import { getGameBySlug, getTasksForGame, listUsers } from "@/lib/queries";
+import { TaskListView } from "@/components/games/task-list-view";
+import type {
+  Priority,
+  Status,
+} from "@/components/games/status-select";
+import type { AssigneeUser } from "@/components/games/assignee-select";
+
+export default async function GameListPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const game = await getGameBySlug(slug);
+  if (!game) notFound();
+
+  const [taskRows, users] = await Promise.all([
+    getTasksForGame(game.id),
+    listUsers(),
+  ]);
+
+  const userOptions: AssigneeUser[] = users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    image: u.image,
+  }));
+
+  const tasks = taskRows.map((t) => ({
+    id: t.id,
+    title: t.title,
+    status: t.status as Status,
+    priority: t.priority as Priority,
+    estimate: t.estimate,
+    estimateLocked: t.estimateLocked,
+    dueDate: t.dueDate ?? null,
+    phaseId: t.phaseId ?? null,
+    position: t.position,
+    assignees: t.assignees.map((a) => ({
+      isPrimary: a.isPrimary,
+      user: {
+        id: a.user.id,
+        name: a.user.name,
+        email: a.user.email,
+        image: a.user.image,
+      },
+    })),
+    labels: t.labels.map((l) => ({
+      label: { id: l.label.id, name: l.label.name, color: l.label.color },
+    })),
+  }));
+
+  return (
+    <TaskListView
+      game={{ id: game.id, slug: game.slug, name: game.name }}
+      phases={game.phases.map((p) => ({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        order: p.order,
+      }))}
+      initialTasks={tasks}
+      users={userOptions}
+    />
+  );
+}

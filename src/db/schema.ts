@@ -1,0 +1,549 @@
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
+import { relations, sql } from "drizzle-orm";
+import type { AdapterAccountType } from "next-auth/adapters";
+
+/* ─────────────────────── enums ─────────────────────── */
+
+export const userRole = pgEnum("user_role", [
+  "OWNER",
+  "ADMIN",
+  "DESIGNER",
+  "VIEWER",
+]);
+
+export const gameStatus = pgEnum("game_status", [
+  "CONCEPT",
+  "IN_DESIGN",
+  "IN_BUILD",
+  "IN_TESTING",
+  "LAUNCHED",
+  "RETIRED",
+]);
+
+export const phaseKind = pgEnum("phase_kind", [
+  "CONCEPT",
+  "NARRATIVE",
+  "PUZZLE_DESIGN",
+  "FABRICATION",
+  "TECH",
+  "PLAYTEST",
+  "LAUNCH",
+  "CUSTOM",
+]);
+
+export const taskStatus = pgEnum("task_status", [
+  "TODO",
+  "IN_PROGRESS",
+  "IN_REVIEW",
+  "BLOCKED",
+  "DONE",
+]);
+
+export const taskPriority = pgEnum("task_priority", [
+  "LOW",
+  "MEDIUM",
+  "HIGH",
+  "URGENT",
+]);
+
+export const discipline = pgEnum("discipline", [
+  "NARRATIVE",
+  "PUZZLE",
+  "PROP",
+  "SET",
+  "ELECTRONICS",
+  "SOUND_LIGHTING",
+  "MARKETING",
+  "OPERATIONS",
+  "OTHER",
+]);
+
+export const xpReason = pgEnum("xp_reason", [
+  "TASK_CLOSED",
+  "TASK_CLOSED_EARLY",
+  "TASK_CLOSED_LATE",
+  "ASSIST_REVIEW",
+  "REOPENED_REVERSAL",
+  "BADGE_EARNED",
+  "QUEST_COMPLETED",
+  "STREAK_BONUS",
+  "MANUAL_ADJUSTMENT",
+]);
+
+export const notificationType = pgEnum("notification_type", [
+  "ASSIGNED",
+  "MENTIONED",
+  "DUE_SOON",
+  "OVERDUE",
+  "COMMENT",
+  "STATUS_CHANGED",
+  "BADGE_EARNED",
+  "LEVEL_UP",
+]);
+
+export const activityVerb = pgEnum("activity_verb", [
+  "CREATED",
+  "UPDATED",
+  "DELETED",
+  "STATUS_CHANGED",
+  "ASSIGNED",
+  "UNASSIGNED",
+  "COMMENTED",
+  "CLOSED",
+  "REOPENED",
+]);
+
+/* ──────────────────── Auth.js tables ─────────────────── */
+
+export const users = pgTable("user", {
+  id: text("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: text(),
+  email: text().notNull().unique(),
+  emailVerified: timestamp({ mode: "date", withTimezone: true }),
+  image: text(),
+  role: userRole().notNull().default("DESIGNER"),
+  primaryDiscipline: discipline().default("OTHER"),
+  totalXp: integer().notNull().default(0),
+  level: integer().notNull().default(1),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const accounts = pgTable(
+  "account",
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text().$type<AdapterAccountType>().notNull(),
+    provider: text().notNull(),
+    providerAccountId: text().notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text(),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.provider, t.providerAccountId] }),
+  ],
+);
+
+export const sessions = pgTable("session", {
+  sessionToken: text().primaryKey(),
+  userId: text()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp({ mode: "date", withTimezone: true }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  "verification_token",
+  {
+    identifier: text().notNull(),
+    token: text().notNull(),
+    expires: timestamp({ mode: "date", withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
+);
+
+/* ───────────────────── domain tables ────────────────────── */
+
+export const games = pgTable(
+  "game",
+  {
+    id: text()
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    name: varchar({ length: 120 }).notNull(),
+    slug: varchar({ length: 140 }).notNull(),
+    description: text(),
+    status: gameStatus().notNull().default("CONCEPT"),
+    coverColor: varchar({ length: 16 }).notNull().default("#7c3aed"),
+    coverImage: text(),
+    launchDate: timestamp({ mode: "date", withTimezone: true }),
+    createdById: text().references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    archivedAt: timestamp({ mode: "date", withTimezone: true }),
+  },
+  (t) => [uniqueIndex("game_slug_idx").on(t.slug)],
+);
+
+export const phases = pgTable("phase", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  gameId: text()
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  name: varchar({ length: 80 }).notNull(),
+  kind: phaseKind().notNull().default("CUSTOM"),
+  order: integer().notNull().default(0),
+  color: varchar({ length: 16 }).notNull().default("#64748b"),
+});
+
+export const labels = pgTable("label", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  gameId: text()
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  name: varchar({ length: 40 }).notNull(),
+  color: varchar({ length: 16 }).notNull().default("#64748b"),
+});
+
+export const tasks = pgTable("task", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  gameId: text()
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  phaseId: text().references(() => phases.id, { onDelete: "set null" }),
+  parentTaskId: text("parent_task_id"),
+  title: varchar({ length: 280 }).notNull(),
+  description: text(),
+  status: taskStatus().notNull().default("TODO"),
+  priority: taskPriority().notNull().default("MEDIUM"),
+  discipline: discipline(),
+  estimate: integer().notNull().default(1),
+  estimateLocked: boolean().notNull().default(false),
+  dueDate: timestamp({ mode: "date", withTimezone: true }),
+  startedAt: timestamp({ mode: "date", withTimezone: true }),
+  completedAt: timestamp({ mode: "date", withTimezone: true }),
+  position: integer().notNull().default(0),
+  blockedReason: text(),
+  createdById: text().references(() => users.id, { onDelete: "set null" }),
+  closedById: text().references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const taskAssignees = pgTable(
+  "task_assignee",
+  {
+    taskId: text()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    isPrimary: boolean().notNull().default(false),
+  },
+  (t) => [primaryKey({ columns: [t.taskId, t.userId] })],
+);
+
+export const taskLabels = pgTable(
+  "task_label",
+  {
+    taskId: text()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    labelId: text()
+      .notNull()
+      .references(() => labels.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.taskId, t.labelId] })],
+);
+
+export const dependencies = pgTable(
+  "dependency",
+  {
+    blockerTaskId: text()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    blockedTaskId: text()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    reason: text(),
+  },
+  (t) => [primaryKey({ columns: [t.blockerTaskId, t.blockedTaskId] })],
+);
+
+export const checklistItems = pgTable("checklist_item", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  taskId: text()
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  body: varchar({ length: 280 }).notNull(),
+  done: boolean().notNull().default(false),
+  position: integer().notNull().default(0),
+});
+
+export const comments = pgTable("comment", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  taskId: text()
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  authorId: text().references(() => users.id, { onDelete: "set null" }),
+  body: text().notNull(),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  editedAt: timestamp({ mode: "date", withTimezone: true }),
+});
+
+export const mentions = pgTable(
+  "mention",
+  {
+    commentId: text()
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.commentId, t.userId] })],
+);
+
+export const attachments = pgTable("attachment", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  taskId: text()
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  uploadedById: text().references(() => users.id, { onDelete: "set null" }),
+  url: text().notNull(),
+  name: varchar({ length: 200 }).notNull(),
+  mimeType: varchar({ length: 80 }),
+  byteSize: integer(),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const activities = pgTable("activity", {
+  id: serial().primaryKey(),
+  entityType: varchar({ length: 40 }).notNull(),
+  entityId: text().notNull(),
+  gameId: text().references(() => games.id, { onDelete: "cascade" }),
+  actorId: text().references(() => users.id, { onDelete: "set null" }),
+  verb: activityVerb().notNull(),
+  payload: jsonb().$type<Record<string, unknown>>(),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const notifications = pgTable("notification", {
+  id: serial().primaryKey(),
+  userId: text()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: notificationType().notNull(),
+  taskId: text().references(() => tasks.id, { onDelete: "cascade" }),
+  gameId: text().references(() => games.id, { onDelete: "cascade" }),
+  actorId: text().references(() => users.id, { onDelete: "set null" }),
+  payload: jsonb().$type<Record<string, unknown>>(),
+  readAt: timestamp({ mode: "date", withTimezone: true }),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const savedViews = pgTable("saved_view", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  gameId: text().references(() => games.id, { onDelete: "cascade" }),
+  userId: text().references(() => users.id, { onDelete: "cascade" }),
+  name: varchar({ length: 80 }).notNull(),
+  viewType: varchar({ length: 24 }).notNull(),
+  config: jsonb().$type<Record<string, unknown>>(),
+  isShared: boolean().notNull().default(false),
+});
+
+/* ───────────────── gamification tables ────────────────── */
+
+export const xpEvents = pgTable("xp_event", {
+  id: serial().primaryKey(),
+  userId: text()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  taskId: text().references(() => tasks.id, { onDelete: "set null" }),
+  gameId: text().references(() => games.id, { onDelete: "set null" }),
+  amount: integer().notNull(),
+  reason: xpReason().notNull(),
+  multiplier: integer().notNull().default(100),
+  discipline: discipline(),
+  note: text(),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const badges = pgTable("badge", {
+  code: varchar({ length: 60 }).primaryKey(),
+  name: varchar({ length: 80 }).notNull(),
+  description: text().notNull(),
+  icon: varchar({ length: 40 }).notNull(),
+  color: varchar({ length: 16 }).notNull().default("#7c3aed"),
+  criteria: jsonb().$type<Record<string, unknown>>().notNull(),
+});
+
+export const userBadges = pgTable(
+  "user_badge",
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    badgeCode: varchar({ length: 60 })
+      .notNull()
+      .references(() => badges.code, { onDelete: "cascade" }),
+    awardedAt: timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.badgeCode] })],
+);
+
+export const disciplineXp = pgTable(
+  "discipline_xp",
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    discipline: discipline().notNull(),
+    xp: integer().notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.discipline] })],
+);
+
+export const streaks = pgTable("streak", {
+  userId: text()
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  current: integer().notNull().default(0),
+  longest: integer().notNull().default(0),
+  lastActivityDate: timestamp({ mode: "date", withTimezone: true }),
+});
+
+/* ────────────────────── relations ─────────────────────── */
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
+  taskAssignments: many(taskAssignees),
+  comments: many(comments),
+  xpEvents: many(xpEvents),
+  badges: many(userBadges),
+  disciplineXp: many(disciplineXp),
+  streak: one(streaks, { fields: [users.id], references: [streaks.userId] }),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, { fields: [accounts.userId], references: [users.id] }),
+}));
+
+export const gamesRelations = relations(games, ({ many, one }) => ({
+  phases: many(phases),
+  tasks: many(tasks),
+  labels: many(labels),
+  createdBy: one(users, {
+    fields: [games.createdById],
+    references: [users.id],
+  }),
+}));
+
+export const phasesRelations = relations(phases, ({ one, many }) => ({
+  game: one(games, { fields: [phases.gameId], references: [games.id] }),
+  tasks: many(tasks),
+}));
+
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  game: one(games, { fields: [tasks.gameId], references: [games.id] }),
+  phase: one(phases, { fields: [tasks.phaseId], references: [phases.id] }),
+  createdBy: one(users, {
+    fields: [tasks.createdById],
+    references: [users.id],
+    relationName: "createdBy",
+  }),
+  closedBy: one(users, {
+    fields: [tasks.closedById],
+    references: [users.id],
+    relationName: "closedBy",
+  }),
+  assignees: many(taskAssignees),
+  labels: many(taskLabels),
+  comments: many(comments),
+  checklistItems: many(checklistItems),
+  attachments: many(attachments),
+}));
+
+export const taskAssigneesRelations = relations(taskAssignees, ({ one }) => ({
+  task: one(tasks, { fields: [taskAssignees.taskId], references: [tasks.id] }),
+  user: one(users, { fields: [taskAssignees.userId], references: [users.id] }),
+}));
+
+export const taskLabelsRelations = relations(taskLabels, ({ one }) => ({
+  task: one(tasks, { fields: [taskLabels.taskId], references: [tasks.id] }),
+  label: one(labels, {
+    fields: [taskLabels.labelId],
+    references: [labels.id],
+  }),
+}));
+
+export const labelsRelations = relations(labels, ({ one, many }) => ({
+  game: one(games, { fields: [labels.gameId], references: [games.id] }),
+  tasks: many(taskLabels),
+}));
+
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+  task: one(tasks, { fields: [comments.taskId], references: [tasks.id] }),
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+  mentions: many(mentions),
+}));
+
+export const userBadgesRelations = relations(userBadges, ({ one }) => ({
+  user: one(users, { fields: [userBadges.userId], references: [users.id] }),
+  badge: one(badges, {
+    fields: [userBadges.badgeCode],
+    references: [badges.code],
+  }),
+}));
+
+/* ─────────────── inferred row types ────────────── */
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Game = typeof games.$inferSelect;
+export type NewGame = typeof games.$inferInsert;
+export type Phase = typeof phases.$inferSelect;
+export type Task = typeof tasks.$inferSelect;
+export type NewTask = typeof tasks.$inferInsert;
+export type Label = typeof labels.$inferSelect;
+export type Comment = typeof comments.$inferSelect;
+export type Badge = typeof badges.$inferSelect;
+export type XpEvent = typeof xpEvents.$inferSelect;
