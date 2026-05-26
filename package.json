@@ -16,7 +16,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
-    "db:add-games": "tsx src/db/add-games.ts"
+    "db:add-games": "tsx src/db/add-games.ts",
+    "db:reset": "tsx src/db/reset.ts",
+    "db:deploy": "tsx src/db/deploy.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
