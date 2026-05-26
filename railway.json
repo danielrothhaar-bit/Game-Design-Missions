@@ -4,7 +4,8 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm run db:migrate && npm start",
+    "preDeployCommand": "npm run db:push -- --force",
+    "startCommand": "npm start",
     "healthcheckPath": "/login",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",

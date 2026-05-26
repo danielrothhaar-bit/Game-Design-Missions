@@ -102,8 +102,12 @@ Visit <http://localhost:3000>.
 2. Add the **Postgres** plugin. Railway will inject `DATABASE_URL`.
 3. Add the remaining env vars (`AUTH_SECRET`, `DEV_PASSCODE`,
    `EMAIL_ALLOWLIST`, `NEXT_PUBLIC_APP_URL`) under **Variables**.
-4. First deploy will run `npm run build`. The `railway.json` start command
-   runs `db:migrate` then `npm start`, so schema is always up to date.
+4. First deploy will run `npm run build`. The `railway.json`
+   `preDeployCommand` runs `drizzle-kit push --force` to sync the schema
+   (self-healing — creates missing tables, skips existing ones) before the
+   server starts with `npm start`. Running schema setup in `preDeployCommand`
+   rather than the start command means a DB failure fails the deploy cleanly
+   instead of triggering a crash-restart loop.
 
 ## Enabling Google SSO (later)
 
