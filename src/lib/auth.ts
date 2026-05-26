@@ -42,6 +42,9 @@ const googleEnabled = Boolean(
 );
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Self-hosted behind Railway's proxy — trust the forwarded host instead of
+  // requiring AUTH_TRUST_HOST to be set as an env var.
+  trustHost: true,
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
