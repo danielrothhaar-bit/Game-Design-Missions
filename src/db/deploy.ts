@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { sql } from "drizzle-orm";
 import { db } from "./index";
+import { seedGamesCatalog } from "./seed-games";
 
 /**
  * Runs in Railway's preDeployCommand.
@@ -10,6 +11,9 @@ import { db } from "./index";
  *    variable so normal deploys never destroy data.
  * 2. Sync the schema with `drizzle-kit push --force` (creates missing tables,
  *    leaves existing ones alone).
+ * 3. If SEED_GAMES_ON_DEPLOY=true, idempotently insert the TEG game catalog.
+ *    Safe to leave on (existing games are skipped), but typically set once
+ *    then removed.
  */
 async function main() {
   if (process.env.RESET_DB_ON_DEPLOY === "true") {
@@ -22,6 +26,12 @@ async function main() {
   console.log("→ syncing schema (drizzle-kit push --force)");
   execSync("npx drizzle-kit push --force", { stdio: "inherit" });
   console.log("✓ schema sync complete");
+
+  if (process.env.SEED_GAMES_ON_DEPLOY === "true") {
+    console.log("→ SEED_GAMES_ON_DEPLOY=true — seeding game catalog");
+    await seedGamesCatalog();
+  }
+
   process.exit(0);
 }
 
