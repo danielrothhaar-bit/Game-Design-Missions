@@ -4,6 +4,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { listGames, getUser } from "@/lib/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: {
