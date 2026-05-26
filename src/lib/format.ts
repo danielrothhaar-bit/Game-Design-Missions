@@ -65,3 +65,23 @@ const GAME_STATUS_LABEL: Record<string, string> = {
   RETIRED: "Retired",
 };
 export const gameStatusLabel = (s: string) => GAME_STATUS_LABEL[s] ?? s;
+
+const GAME_STATUS_COLOR: Record<string, string> = {
+  CONCEPT: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+  IN_DESIGN: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  IN_BUILD: "bg-orange-500/15 text-orange-300 border-orange-500/30",
+  IN_TESTING: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  LAUNCHED: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  RETIRED: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
+};
+export const gameStatusColor = (s: string) =>
+  GAME_STATUS_COLOR[s] ?? GAME_STATUS_COLOR.CONCEPT;
+
+export const GAME_STATUSES = [
+  "CONCEPT",
+  "IN_DESIGN",
+  "IN_BUILD",
+  "IN_TESTING",
+  "LAUNCHED",
+  "RETIRED",
+] as const;

@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { getGameBySlug } from "@/lib/queries";
-import { gameStatusLabel } from "@/lib/format";
+import { GAME_STATUSES } from "@/lib/format";
+import {
+  GameLaunchDatePicker,
+  GameStatusPicker,
+} from "@/components/games/game-header-controls";
 
 export default async function GameLayout({
   children,
@@ -15,12 +18,6 @@ export default async function GameLayout({
   const game = await getGameBySlug(slug);
   if (!game) notFound();
 
-  // eslint-disable-next-line react-hooks/purity -- per-request timestamp in async RSC
-  const nowMs = Date.now();
-  const daysToLaunch = game.launchDate
-    ? Math.round((game.launchDate.getTime() - nowMs) / (1000 * 60 * 60 * 24))
-    : null;
-
   return (
     <div className="flex h-full flex-col">
       <div
@@ -30,14 +27,18 @@ export default async function GameLayout({
       <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
         <div className="flex min-w-0 items-center gap-3">
           <h1 className="truncate text-lg font-semibold">{game.name}</h1>
-          <Badge variant="secondary">{gameStatusLabel(game.status)}</Badge>
-          {daysToLaunch !== null ? (
-            <span className="text-xs text-muted-foreground">
-              {daysToLaunch >= 0
-                ? `Launches in ${daysToLaunch} days`
-                : `Launched ${-daysToLaunch} days ago`}
-            </span>
-          ) : null}
+          <GameStatusPicker
+            gameId={game.id}
+            initial={
+              (GAME_STATUSES as readonly string[]).includes(game.status)
+                ? (game.status as (typeof GAME_STATUSES)[number])
+                : "CONCEPT"
+            }
+          />
+          <GameLaunchDatePicker
+            gameId={game.id}
+            initial={game.launchDate ?? null}
+          />
         </div>
         <nav className="flex items-center gap-1 text-sm">
           <TabLink href={`/games/${slug}`} label="List" exact />
