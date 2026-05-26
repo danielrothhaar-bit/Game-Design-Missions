@@ -1,13 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Plus, Trophy } from "lucide-react";
+import { ChevronRight, Plus, Trophy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
+import { GAME_STATUSES, gameStatusLabel } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
-type Game = { slug: string; name: string; coverColor: string };
+type Game = {
+  slug: string;
+  name: string;
+  coverColor: string;
+  status: string;
+};
 
 export function Sidebar({
   games,
@@ -19,18 +27,26 @@ export function Sidebar({
     email: string;
     totalXp: number;
     level: number;
+    role: string;
   };
 }) {
   const p = progressInLevel(user.totalXp);
+  const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
+
+  const grouped = GAME_STATUSES.map((status) => ({
+    status,
+    games: games.filter((g) => g.status === status),
+  })).filter((group) => group.games.length > 0);
+
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-2 px-4 py-4">
         <Link href="/my-work" className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
-            Q
+            M
           </span>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold">Quests</span>
+            <span className="text-sm font-semibold">Missions</span>
             <span className="text-[11px] text-muted-foreground">
               The Escape Game
             </span>
@@ -40,12 +56,7 @@ export function Sidebar({
 
       <nav className="flex-1 overflow-y-auto px-2 py-2">
         <div className="mb-3">
-          <SidebarLink
-            href="/my-work"
-            icon="briefcase"
-            label="My Work"
-            exact
-          />
+          <SidebarLink href="/my-work" icon="briefcase" label="My Work" exact />
           <SidebarLink href="/dashboard" icon="dashboard" label="Dashboard" />
           <SidebarLink href="/games" icon="grid" label="All Games" exact />
         </div>
@@ -70,23 +81,29 @@ export function Sidebar({
               <TooltipContent>New game</TooltipContent>
             </Tooltip>
           </div>
-          <div className="space-y-0.5">
-            {games.length === 0 ? (
-              <p className="px-2.5 py-2 text-xs text-muted-foreground">
-                No games yet.
-              </p>
-            ) : (
-              games.map((g) => (
-                <SidebarGameLink
-                  key={g.slug}
-                  slug={g.slug}
-                  name={g.name}
-                  color={g.coverColor}
+
+          {games.length === 0 ? (
+            <p className="px-2.5 py-2 text-xs text-muted-foreground">
+              No games yet.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {grouped.map((group) => (
+                <GameGroup
+                  key={group.status}
+                  label={gameStatusLabel(group.status)}
+                  games={group.games}
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {isAdmin ? (
+          <div className="mt-4">
+            <SidebarLink href="/admin" icon="shield" label="Admin" />
+          </div>
+        ) : null}
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
@@ -109,5 +126,45 @@ export function Sidebar({
         </Link>
       </div>
     </aside>
+  );
+}
+
+function GameGroup({
+  label,
+  games,
+}: {
+  label: string;
+  games: Game[];
+}) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
+      >
+        <ChevronRight
+          className={cn(
+            "size-3 transition-transform",
+            open && "rotate-90",
+          )}
+        />
+        {label}
+        <span className="ml-auto tabular-nums opacity-60">{games.length}</span>
+      </button>
+      {open ? (
+        <div className="space-y-0.5 pb-1 pl-1.5">
+          {games.map((g) => (
+            <SidebarGameLink
+              key={g.slug}
+              slug={g.slug}
+              name={g.name}
+              color={g.coverColor}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -14,10 +14,10 @@ export default async function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground text-xl font-semibold">
-            Q
+            M
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome to Quests
+            Welcome to Missions
           </h1>
           <p className="text-sm text-muted-foreground text-center">
             Sign in with your studio email. Google SSO coming soon.

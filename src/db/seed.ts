@@ -104,13 +104,7 @@ async function seedUsers() {
 async function seedGame(
   name: string,
   slug: string,
-  status:
-    | "CONCEPT"
-    | "IN_DESIGN"
-    | "IN_BUILD"
-    | "IN_TESTING"
-    | "LAUNCHED"
-    | "RETIRED",
+  status: "NEW" | "OPEN" | "LEGACY" | "ACQUISITION",
   launchInDays: number,
   description: string,
   coverColor: string,
@@ -592,7 +586,7 @@ async function main() {
   const frost = await seedGame(
     "Frostfall Outpost",
     "frostfall-outpost",
-    "IN_TESTING",
+    "NEW",
     45,
     "An arctic expedition gone wrong. Players race to recover the lost research before the storm closes in.",
     "#3b82f6",
@@ -603,7 +597,7 @@ async function main() {
   const oracle = await seedGame(
     "Oracle of Aetheron",
     "oracle-of-aetheron",
-    "IN_DESIGN",
+    "NEW",
     120,
     "Ancient temple ruins guard a prophecy. Players decode constellations to commune with the Oracle.",
     "#a855f7",

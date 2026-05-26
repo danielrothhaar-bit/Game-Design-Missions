@@ -27,12 +27,14 @@ export default async function AppLayout({
           slug: g.slug,
           name: g.name,
           coverColor: g.coverColor,
+          status: g.status,
         }))}
         user={{
           name: user.name,
           email: user.email,
           totalXp: user.totalXp,
           level: user.level,
+          role: user.role,
         }}
       />
       <div className="flex min-w-0 flex-1 flex-col">

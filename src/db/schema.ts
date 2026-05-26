@@ -24,12 +24,10 @@ export const userRole = pgEnum("user_role", [
 ]);
 
 export const gameStatus = pgEnum("game_status", [
-  "CONCEPT",
-  "IN_DESIGN",
-  "IN_BUILD",
-  "IN_TESTING",
-  "LAUNCHED",
-  "RETIRED",
+  "NEW",
+  "OPEN",
+  "LEGACY",
+  "ACQUISITION",
 ]);
 
 export const phaseKind = pgEnum("phase_kind", [
@@ -175,7 +173,7 @@ export const games = pgTable(
     name: varchar({ length: 120 }).notNull(),
     slug: varchar({ length: 140 }).notNull(),
     description: text(),
-    status: gameStatus().notNull().default("CONCEPT"),
+    status: gameStatus().notNull().default("NEW"),
     coverColor: varchar({ length: 16 }).notNull().default("#7c3aed"),
     coverImage: text(),
     launchDate: timestamp({ mode: "date", withTimezone: true }),

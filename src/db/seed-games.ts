@@ -31,7 +31,7 @@ async function ensureGame(
     .values({
       name: g.name,
       slug: g.slug,
-      status: "LAUNCHED",
+      status: "OPEN",
       coverColor: g.coverColor,
       createdById,
     })

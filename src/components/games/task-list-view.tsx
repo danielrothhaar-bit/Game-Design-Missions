@@ -176,6 +176,32 @@ export function TaskListView({
     }
   }
 
+  function addTask(phaseId: string, title: string) {
+    startTransition(async () => {
+      try {
+        const created = await createTask({ gameId: game.id, phaseId, title });
+        setTasks((prev) => [
+          ...prev,
+          {
+            id: created.id,
+            title: created.title,
+            status: created.status as Status,
+            priority: created.priority as Priority,
+            estimate: created.estimate,
+            estimateLocked: created.estimateLocked,
+            dueDate: created.dueDate,
+            phaseId: created.phaseId,
+            position: created.position,
+            assignees: [],
+            labels: [],
+          },
+        ]);
+      } catch {
+        toast.error("Could not create task");
+      }
+    });
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-6 py-3">
@@ -221,6 +247,16 @@ export function TaskListView({
               {counts.overdue} overdue
             </Badge>
           ) : null}
+          {phases.length > 0 ? (
+            <Button
+              size="sm"
+              className="h-8"
+              onClick={() => addTask(phases[0].id, "New task")}
+            >
+              <Plus className="size-3.5" />
+              New Task
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -240,35 +276,7 @@ export function TaskListView({
                 onChangeStatus={changeStatus}
                 onChangeAssignee={changeAssignee}
                 onCommitField={commitField}
-                onCreate={async (title) => {
-                  startTransition(async () => {
-                    try {
-                      const created = await createTask({
-                        gameId: game.id,
-                        phaseId: phase.id,
-                        title,
-                      });
-                      setTasks((prev) => [
-                        ...prev,
-                        {
-                          id: created.id,
-                          title: created.title,
-                          status: created.status as Status,
-                          priority: created.priority as Priority,
-                          estimate: created.estimate,
-                          estimateLocked: created.estimateLocked,
-                          dueDate: created.dueDate,
-                          phaseId: created.phaseId,
-                          position: created.position,
-                          assignees: [],
-                          labels: [],
-                        },
-                      ]);
-                    } catch {
-                      toast.error("Could not create task");
-                    }
-                  });
-                }}
+                onCreate={(title) => addTask(phase.id, title)}
                 onDelete={remove}
               />
             ))}

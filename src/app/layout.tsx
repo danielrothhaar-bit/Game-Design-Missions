@@ -10,7 +10,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Quests", template: "%s · Quests" },
+  title: { default: "Missions", template: "%s · Missions" },
   description:
     "Project management and gamification for game design teams.",
 };

@@ -7,14 +7,7 @@ import { db } from "@/db";
 import { activities, games } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
-const GameStatusEnum = z.enum([
-  "CONCEPT",
-  "IN_DESIGN",
-  "IN_BUILD",
-  "IN_TESTING",
-  "LAUNCHED",
-  "RETIRED",
-]);
+const GameStatusEnum = z.enum(["NEW", "OPEN", "LEGACY", "ACQUISITION"]);
 
 const UpdateInput = z.object({
   id: z.string(),

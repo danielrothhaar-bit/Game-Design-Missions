@@ -32,7 +32,7 @@ export default async function GameLayout({
             initial={
               (GAME_STATUSES as readonly string[]).includes(game.status)
                 ? (game.status as (typeof GAME_STATUSES)[number])
-                : "CONCEPT"
+                : "NEW"
             }
           />
           <GameLaunchDatePicker

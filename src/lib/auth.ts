@@ -51,8 +51,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
   }),
-  session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  session: {
+    strategy: "jwt",
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    updateAge: 60 * 60 * 24, // refresh the cookie at most once a day
+  },
+  pages: { signIn: "/login", error: "/login" },
   providers: [
     Credentials({
       name: "Dev Login",
