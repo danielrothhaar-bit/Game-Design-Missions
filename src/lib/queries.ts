@@ -23,6 +23,14 @@ export async function listSkills(includeArchived = false) {
 
 export async function listGames() {
   return db.query.games.findMany({
+    where: (g, { ne }) => ne(g.kind, "SIDEQUEST"),
+    orderBy: [desc(games.createdAt)],
+  });
+}
+
+export async function listSidequests() {
+  return db.query.games.findMany({
+    where: (g, { eq: eqOp }) => eqOp(g.kind, "SIDEQUEST"),
     orderBy: [desc(games.createdAt)],
   });
 }

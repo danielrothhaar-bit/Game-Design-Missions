@@ -85,3 +85,11 @@ export const GAME_STATUSES = [
   "LEGACY",
   "ACQUISITION",
 ] as const;
+
+// Fixed status set for sidequests (not editable, unlike game statuses).
+export const SIDEQUEST_STATUSES: { slug: string; label: string; color: string }[] =
+  [
+    { slug: "OPEN", label: "Open", color: "#10b981" },
+    { slug: "ON_HOLD", label: "On Hold", color: "#f59e0b" },
+    { slug: "CLOSED", label: "Closed", color: "#71717a" },
+  ];

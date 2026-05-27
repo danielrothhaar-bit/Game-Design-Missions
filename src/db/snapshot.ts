@@ -34,7 +34,7 @@ const TABLES = [
   "phase_template",
   "phase_template_task",
   "user_skill",
-  "sidequest",
+  "game_status_option",
 ];
 
 const KEEP = 10;

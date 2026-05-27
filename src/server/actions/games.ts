@@ -128,3 +128,50 @@ export async function createGame(input: z.input<typeof CreateGameInput>) {
   revalidatePath("/dashboard");
   return { slug: game.slug };
 }
+
+const CreateSidequestInput = z.object({
+  name: z.string().min(1).max(120),
+  description: z.string().max(2000).optional(),
+  coverColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#0ea5e9"),
+});
+
+export async function createSidequest(
+  input: z.input<typeof CreateSidequestInput>,
+) {
+  const userId = await requireUser();
+  const parsed = CreateSidequestInput.parse(input);
+
+  const base = slugify(parsed.name) || "sidequest";
+  let slug = base;
+  for (let i = 2; ; i++) {
+    const clash = await db.query.games.findFirst({
+      where: eq(games.slug, slug),
+    });
+    if (!clash) break;
+    slug = `${base}-${i}`;
+  }
+
+  const [sq] = await db
+    .insert(games)
+    .values({
+      name: parsed.name,
+      slug,
+      kind: "SIDEQUEST",
+      statusSlug: "OPEN",
+      coverColor: parsed.coverColor,
+      description: parsed.description,
+      createdById: userId,
+    })
+    .returning();
+
+  await db.insert(activities).values({
+    entityType: "game",
+    entityId: sq.id,
+    gameId: sq.id,
+    actorId: userId,
+    verb: "CREATED",
+  });
+
+  revalidatePath("/", "layout");
+  return { slug: sq.slug };
+}

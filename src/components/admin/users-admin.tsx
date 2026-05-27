@@ -11,6 +11,7 @@ import { initials } from "@/lib/format";
 import {
   createUser,
   setUserSkillLevel,
+  updateUserName,
   updateUserRole,
 } from "@/server/actions/users";
 
@@ -61,6 +62,21 @@ export function UsersAdmin({
         toast.success(`Added ${e}`);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Could not add user");
+      }
+    });
+  }
+
+  function changeName(id: string, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setUsers((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, name: trimmed } : u)),
+    );
+    start(async () => {
+      try {
+        await updateUserName(id, trimmed);
+      } catch {
+        toast.error("Could not rename user");
       }
     });
   }
@@ -136,6 +152,7 @@ export function UsersAdmin({
             key={u.id}
             user={u}
             skills={skills}
+            onChangeName={(n) => changeName(u.id, n)}
             onChangeRole={(r) => changeRole(u.id, r)}
             onSetSkill={(skillId, level) => setSkill(u.id, skillId, level)}
           />
@@ -148,11 +165,13 @@ export function UsersAdmin({
 function UserRow({
   user,
   skills,
+  onChangeName,
   onChangeRole,
   onSetSkill,
 }: {
   user: User;
   skills: SkillOpt[];
+  onChangeName: (name: string) => void;
   onChangeRole: (r: Role) => void;
   onSetSkill: (skillId: string, level: number) => void;
 }) {
@@ -168,10 +187,18 @@ function UserRow({
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">
-            {user.name ?? user.email.split("@")[0]}
+          <Input
+            defaultValue={user.name ?? ""}
+            placeholder={user.email.split("@")[0]}
+            className="h-7 border-transparent px-1 text-sm font-medium hover:border-border focus-visible:border-border"
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && v !== (user.name ?? "")) onChangeName(v);
+            }}
+          />
+          <p className="truncate px-1 text-xs text-muted-foreground">
+            {user.email}
           </p>
-          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </div>
         <select
           value={user.role}

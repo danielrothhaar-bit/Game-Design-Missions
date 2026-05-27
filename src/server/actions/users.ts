@@ -54,6 +54,15 @@ export async function updateUserRole(
   return { ok: true };
 }
 
+export async function updateUserName(userId: string, name: string) {
+  await requireAdmin();
+  const n = z.string().min(1).max(120).parse(name.trim());
+  await db.update(users).set({ name: n }).where(eq(users.id, userId));
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 export async function setUserSkillLevel(
   userId: string,
   skillId: string,
