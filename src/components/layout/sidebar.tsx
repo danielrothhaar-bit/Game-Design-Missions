@@ -110,6 +110,9 @@ export function Sidebar({
             next level
           </p>
         </Link>
+        <div className="mt-1">
+          <SidebarLink href="/help" icon="help" label="How XP works" />
+        </div>
         <button
           onClick={() => logoutAction()}
           className="mt-1 flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"

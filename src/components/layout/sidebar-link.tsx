@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Briefcase,
+  HelpCircle,
   LayoutGrid,
   Shield,
   Star,
@@ -21,6 +22,7 @@ const ICONS = {
   grid: LayoutGrid,
   shield: Shield,
   users: Users,
+  help: HelpCircle,
 } as const;
 
 export type SidebarIcon = keyof typeof ICONS;
