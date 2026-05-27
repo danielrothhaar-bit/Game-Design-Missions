@@ -10,6 +10,7 @@ import {
   notifications,
   streaks,
   taskAssignees,
+  taskSkills,
   tasks,
   userBadges,
   users,
@@ -218,26 +219,35 @@ const SkillLevelEnum = z.enum([
   "EXPERT",
 ]);
 
-export async function setTaskSkill(
+const SkillsInput = z.array(
+  z.object({ skillId: z.string(), level: SkillLevelEnum }),
+);
+
+export async function setTaskSkills(
   taskId: string,
-  skillId: string | null,
-  skillLevel: z.infer<typeof SkillLevelEnum> | null,
+  skillsList: z.input<typeof SkillsInput>,
 ) {
   await requireUser();
-  if (skillLevel) SkillLevelEnum.parse(skillLevel);
+  const parsed = SkillsInput.parse(skillsList);
   const task = await db.query.tasks.findFirst({
     where: eq(tasks.id, taskId),
     with: { game: true },
   });
   if (!task) throw new Error("Task not found");
-  await db
-    .update(tasks)
-    .set({
-      skillId,
-      skillLevel: skillId ? skillLevel : null,
-      updatedAt: new Date(),
-    })
-    .where(eq(tasks.id, taskId));
+
+  await db.delete(taskSkills).where(eq(taskSkills.taskId, taskId));
+  if (parsed.length) {
+    // De-dupe by skillId (composite PK), last level wins.
+    const byId = new Map(parsed.map((s) => [s.skillId, s.level]));
+    await db.insert(taskSkills).values(
+      [...byId.entries()].map(([skillId, level]) => ({
+        taskId,
+        skillId,
+        level,
+      })),
+    );
+  }
+  await db.update(tasks).set({ updatedAt: new Date() }).where(eq(tasks.id, taskId));
   revalidatePath(`/games/${task.game.slug}`);
   return { ok: true };
 }

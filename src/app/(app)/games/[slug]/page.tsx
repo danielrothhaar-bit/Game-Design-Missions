@@ -27,6 +27,9 @@ export default async function GameListPage({
     listSkills(),
   ]);
 
+  const gameDesignTeamId =
+    teams.find((t) => t.slug === "product-design")?.id ?? null;
+
   const userOptions: AssigneeUser[] = users.map((u) => ({
     id: u.id,
     name: u.name,
@@ -42,11 +45,12 @@ export default async function GameListPage({
     estimate: t.estimate,
     estimateLocked: t.estimateLocked,
     dueDate: t.dueDate ?? null,
-    phaseId: t.phaseId ?? null,
     position: t.position,
     teamId: t.teamId ?? null,
-    skillId: t.skillId ?? null,
-    skillLevel: (t.skillLevel as SkillLevel | null) ?? null,
+    skills: t.skills.map((ts) => ({
+      skillId: ts.skillId,
+      level: ts.level as SkillLevel,
+    })),
     assignees: t.assignees.map((a) => ({
       isPrimary: a.isPrimary,
       user: {
@@ -64,16 +68,11 @@ export default async function GameListPage({
   return (
     <TaskListView
       game={{ id: game.id, slug: game.slug, name: game.name }}
-      phases={game.phases.map((p) => ({
-        id: p.id,
-        name: p.name,
-        color: p.color,
-        order: p.order,
-      }))}
       initialTasks={tasks}
       users={userOptions}
       teams={teams.map((t) => ({ id: t.id, name: t.name, color: t.color }))}
       skills={skills.map((s) => ({ id: s.id, name: s.name, color: s.color }))}
+      gameDesignTeamId={gameDesignTeamId}
     />
   );
 }

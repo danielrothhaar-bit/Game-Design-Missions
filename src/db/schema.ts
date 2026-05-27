@@ -289,8 +289,6 @@ export const tasks = pgTable("task", {
   priority: taskPriority().notNull().default("MEDIUM"),
   discipline: discipline(),
   teamId: text().references(() => teams.id, { onDelete: "set null" }),
-  skillId: text().references(() => skills.id, { onDelete: "set null" }),
-  skillLevel: experienceLevel(),
   estimate: integer().notNull().default(1),
   estimateLocked: boolean().notNull().default(false),
   dueDate: timestamp({ mode: "date", withTimezone: true }),
@@ -333,6 +331,20 @@ export const taskLabels = pgTable(
       .references(() => labels.id, { onDelete: "cascade" }),
   },
   (t) => [primaryKey({ columns: [t.taskId, t.labelId] })],
+);
+
+export const taskSkills = pgTable(
+  "task_skill",
+  {
+    taskId: text()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    skillId: text()
+      .notNull()
+      .references(() => skills.id, { onDelete: "cascade" }),
+    level: experienceLevel().notNull().default("INTERMEDIATE"),
+  },
+  (t) => [primaryKey({ columns: [t.taskId, t.skillId] })],
 );
 
 export const dependencies = pgTable(
@@ -565,7 +577,7 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   game: one(games, { fields: [tasks.gameId], references: [games.id] }),
   phase: one(phases, { fields: [tasks.phaseId], references: [phases.id] }),
   team: one(teams, { fields: [tasks.teamId], references: [teams.id] }),
-  skill: one(skills, { fields: [tasks.skillId], references: [skills.id] }),
+  skills: many(taskSkills),
   createdBy: one(users, {
     fields: [tasks.createdById],
     references: [users.id],
@@ -593,6 +605,14 @@ export const taskLabelsRelations = relations(taskLabels, ({ one }) => ({
   label: one(labels, {
     fields: [taskLabels.labelId],
     references: [labels.id],
+  }),
+}));
+
+export const taskSkillsRelations = relations(taskSkills, ({ one }) => ({
+  task: one(tasks, { fields: [taskSkills.taskId], references: [tasks.id] }),
+  skill: one(skills, {
+    fields: [taskSkills.skillId],
+    references: [skills.id],
   }),
 }));
 

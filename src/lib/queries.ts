@@ -50,7 +50,7 @@ export async function getTasksForGame(gameId: string) {
       labels: { with: { label: true } },
       phase: true,
       team: true,
-      skill: true,
+      skills: { with: { skill: true } },
     },
   });
 }

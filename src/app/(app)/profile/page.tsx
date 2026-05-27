@@ -38,7 +38,7 @@ export default async function ProfilePage() {
       }),
       db.query.taskAssignees.findMany({
         where: (a, { eq }) => eq(a.userId, userId),
-        with: { task: { with: { skill: true } } },
+        with: { task: { with: { skills: { with: { skill: true } } } } },
       }),
     ]);
   if (!me) redirect("/login");
@@ -48,17 +48,21 @@ export default async function ProfilePage() {
   const sortedDiscipline = [...disciplineXp].sort((a, b) => b.xp - a.xp);
 
   // Completed-task counts per skill (where this user was an assignee).
+  // A task can carry several skills; each one is tallied.
   const skillCounts = new Map<string, { name: string; color: string; count: number }>();
   for (const a of assignments) {
     const t = a.task;
-    if (t.status !== "DONE" || !t.skill) continue;
-    const cur = skillCounts.get(t.skill.id) ?? {
-      name: t.skill.name,
-      color: t.skill.color,
-      count: 0,
-    };
-    cur.count += 1;
-    skillCounts.set(t.skill.id, cur);
+    if (t.status !== "DONE") continue;
+    for (const ts of t.skills) {
+      if (!ts.skill) continue;
+      const cur = skillCounts.get(ts.skill.id) ?? {
+        name: ts.skill.name,
+        color: ts.skill.color,
+        count: 0,
+      };
+      cur.count += 1;
+      skillCounts.set(ts.skill.id, cur);
+    }
   }
   const skillLog = [...skillCounts.values()].sort((a, b) => b.count - a.count);
 
