@@ -6,6 +6,29 @@
 
 export type LevelTitle = { from: number; title: string };
 
+export const SCOPE_SIZES = ["S", "M", "L", "XL"] as const;
+export type ScopeSize = (typeof SCOPE_SIZES)[number];
+export const SCOPE_LABEL: Record<ScopeSize, string> = {
+  S: "Small",
+  M: "Medium",
+  L: "Large",
+  XL: "Massive",
+};
+
+export type DifficultyWeights = {
+  BEGINNER: number;
+  INTERMEDIATE: number;
+  ADVANCED: number;
+  EXPERT: number;
+};
+export type ScopeMultipliers = Record<ScopeSize, number>;
+export type PriorityMultipliers = {
+  LOW: number;
+  MEDIUM: number;
+  HIGH: number;
+  URGENT: number;
+};
+
 export type XpConfig = {
   xpPerPoint: number;
   onTimeMult: number;
@@ -15,6 +38,12 @@ export type XpConfig = {
   levelBaseXp: number;
   reopenReversalDays: number;
   titles: LevelTitle[];
+  // Weight tables that derive a task's XP from how it was scoped, replacing
+  // the old manual estimate. base = Σ difficulty weights across skills (≥1),
+  // then × scope% × priority%, then × xpPerPoint and the timing multiplier.
+  difficultyWeight: DifficultyWeights;
+  scopeMult: ScopeMultipliers;
+  priorityMult: PriorityMultipliers;
 };
 
 export const DEFAULT_TITLES: LevelTitle[] = [
@@ -35,12 +64,55 @@ export const DEFAULT_XP_CONFIG: XpConfig = {
   levelBaseXp: 100,
   reopenReversalDays: 7,
   titles: DEFAULT_TITLES,
+  difficultyWeight: { BEGINNER: 1, INTERMEDIATE: 2, ADVANCED: 4, EXPERT: 7 },
+  scopeMult: { S: 100, M: 200, L: 300, XL: 500 },
+  priorityMult: { LOW: 90, MEDIUM: 100, HIGH: 115, URGENT: 130 },
 };
 
-export const xpForTaskClose = (
-  estimate: number,
+/** Describes how a task was scoped — the inputs that determine its XP. */
+export type TaskScoring = {
+  skillLevels: string[];
+  scopeSize: string;
+  priority: string;
+};
+
+/** Σ of per-difficulty weights across a task's skills, floored at 1. */
+export function taskBaseWeight(
+  skillLevels: string[],
   cfg: XpConfig = DEFAULT_XP_CONFIG,
-): number => Math.max(1, estimate) * cfg.xpPerPoint;
+): number {
+  const sum = skillLevels.reduce(
+    (s, lvl) =>
+      s + (cfg.difficultyWeight[lvl as keyof DifficultyWeights] ?? 0),
+    0,
+  );
+  return Math.max(1, sum);
+}
+
+/** Effort/size weight (base × scope%) — used for both XP and team workload. */
+export function taskEffortWeight(
+  skillLevels: string[],
+  scopeSize: string,
+  cfg: XpConfig = DEFAULT_XP_CONFIG,
+): number {
+  const scope = cfg.scopeMult[scopeSize as ScopeSize] ?? cfg.scopeMult.M;
+  return taskBaseWeight(skillLevels, cfg) * (scope / 100);
+}
+
+/**
+ * Base XP a task is worth before the timing multiplier:
+ * round(base × scope% × priority% × xpPerPoint), floored at 1.
+ */
+export function xpForTaskClose(
+  scoring: TaskScoring,
+  cfg: XpConfig = DEFAULT_XP_CONFIG,
+): number {
+  const effort = taskEffortWeight(scoring.skillLevels, scoring.scopeSize, cfg);
+  const impact =
+    (cfg.priorityMult[scoring.priority as keyof PriorityMultipliers] ??
+      cfg.priorityMult.MEDIUM) / 100;
+  return Math.max(1, Math.round(effort * impact * cfg.xpPerPoint));
+}
 
 export function multiplierFor(
   dueDate: Date | null,

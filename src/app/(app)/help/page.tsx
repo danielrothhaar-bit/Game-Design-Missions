@@ -57,20 +57,36 @@ export default function HelpPage() {
           <h2 className="text-base font-semibold">How you earn XP</h2>
           <p className="text-sm text-muted-foreground">
             You earn XP by closing a task (moving it to{" "}
-            <strong className="text-foreground">Done</strong>). The amount
-            depends on the task&rsquo;s <strong className="text-foreground">estimate</strong>{" "}
-            in points (1 = tiny, 8 = big):
+            <strong className="text-foreground">Done</strong>). There&rsquo;s no
+            points number to type — a task&rsquo;s value is figured out
+            automatically from how it was set up:
           </p>
           <div className="rounded-md bg-muted/40 p-4 text-center font-mono text-sm">
-            XP = estimate points × 10
+            XP = difficulty × scope × priority × timing
           </div>
-          <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>• A 1-point task → 10 XP</li>
-            <li>• A 5-point task → 50 XP</li>
-            <li>• An 8-point task → 80 XP</li>
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            <li>
+              <strong className="text-foreground">Difficulty</strong> — each
+              skill tagged on the task adds weight by its level (Beginner →
+              Expert). More skills, or harder ones, mean more XP.
+            </li>
+            <li>
+              <strong className="text-foreground">Scope</strong> — a quick S vs.
+              a massive XL. Set when the task is scoped (and it locks once work
+              starts).
+            </li>
+            <li>
+              <strong className="text-foreground">Priority</strong> — urgent,
+              high-impact work is worth a bit more than low-priority work.
+            </li>
+            <li>
+              <strong className="text-foreground">Timing</strong> — see below.
+            </li>
           </ul>
           <p className="text-sm text-muted-foreground">
-            Bigger, harder tasks are worth more — on purpose (see Fair play).
+            Bigger, harder, more important tasks are worth more — on purpose
+            (see Fair play). The Scope picker on each task shows a live
+            &ldquo;≈ XP&rdquo; so you know what it&rsquo;s worth.
           </p>
         </CardContent>
       </Card>
@@ -164,14 +180,15 @@ export default function HelpPage() {
           </p>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
             <li>
-              <strong className="text-foreground">Points, not task count.</strong>{" "}
-              Splitting one big task into ten tiny ones doesn&rsquo;t earn more —
-              the points are what count.
+              <strong className="text-foreground">You don&rsquo;t set your own reward.</strong>{" "}
+              XP comes from the task&rsquo;s skills, scope, and priority — all
+              set when it&rsquo;s scoped — not from a number you type when you
+              finish.
             </li>
             <li>
-              <strong className="text-foreground">Estimates lock when work starts.</strong>{" "}
-              Once a task hits In Progress its points are frozen, so set the
-              estimate up front.
+              <strong className="text-foreground">Scope locks when work starts.</strong>{" "}
+              Once a task hits In Progress its scope is frozen, so it can&rsquo;t
+              be bumped up right before closing.
             </li>
             <li>
               <strong className="text-foreground">Reopening reverses XP.</strong>{" "}

@@ -49,12 +49,14 @@ async function requireUser() {
   return session.user.id;
 }
 
+const ScopeSizeEnum = z.enum(["S", "M", "L", "XL"]);
+
 const UpdateInput = z.object({
   id: z.string(),
   title: z.string().min(1).max(280).optional(),
   status: TaskStatusEnum.optional(),
   priority: TaskPriorityEnum.optional(),
-  estimate: z.number().int().min(1).max(100).optional(),
+  scopeSize: ScopeSizeEnum.optional(),
   dueDate: z.union([z.date(), z.null()]).optional(),
   blockedReason: z.union([z.string(), z.null()]).optional(),
 });
@@ -70,13 +72,13 @@ export async function updateTaskFields(input: z.input<typeof UpdateInput>) {
   });
   if (!current) throw new Error("Task not found");
 
-  // Estimate locks once In Progress
+  // Scope locks once In Progress (estimateLocked is the shared lock flag).
   if (
-    patch.estimate !== undefined &&
+    patch.scopeSize !== undefined &&
     current.estimateLocked &&
-    patch.estimate !== current.estimate
+    patch.scopeSize !== current.scopeSize
   ) {
-    throw new Error("Estimate is locked after work has started.");
+    throw new Error("Scope is locked after work has started.");
   }
 
   const movingToInProgress =
@@ -132,7 +134,7 @@ const CreateInput = z.object({
   phaseId: z.string().optional(),
   title: z.string().min(1).max(280),
   priority: TaskPriorityEnum.default("MEDIUM"),
-  estimate: z.number().int().min(1).max(100).default(1),
+  scopeSize: ScopeSizeEnum.default("M"),
 });
 
 export async function createTask(input: z.input<typeof CreateInput>) {
@@ -160,7 +162,7 @@ export async function createTask(input: z.input<typeof CreateInput>) {
       phaseId: parsed.phaseId,
       title: parsed.title,
       priority: parsed.priority,
-      estimate: parsed.estimate,
+      scopeSize: parsed.scopeSize,
       dueDate,
       position: nextPos,
       createdById: userId,
@@ -374,7 +376,7 @@ export async function deleteTask(taskId: string) {
 async function awardCloseXp(taskId: string, closerId: string) {
   const task = await db.query.tasks.findFirst({
     where: eq(tasks.id, taskId),
-    with: { assignees: true },
+    with: { assignees: true, skills: { columns: { level: true } } },
   });
   if (!task) return;
 
@@ -383,7 +385,14 @@ async function awardCloseXp(taskId: string, closerId: string) {
     task.assignees.find((a) => a.isPrimary) ?? task.assignees[0];
   const primaryUserId = primary?.userId ?? closerId;
 
-  const base = xpForTaskClose(task.estimate, cfg);
+  const base = xpForTaskClose(
+    {
+      skillLevels: task.skills.map((s) => s.level),
+      scopeSize: task.scopeSize,
+      priority: task.priority,
+    },
+    cfg,
+  );
   const mult = multiplierFor(task.dueDate ?? null, new Date(), cfg);
   const amount = applyMultiplier(base, mult);
 

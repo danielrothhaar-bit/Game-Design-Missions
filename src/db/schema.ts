@@ -333,6 +333,10 @@ export const tasks = pgTable("task", {
   teamId: text().references(() => teams.id, { onDelete: "set null" }),
   estimate: integer().notNull().default(1),
   estimateLocked: boolean().notNull().default(false),
+  // Coarse effort/size bucket (S|M|L|XL) used to weight XP. Replaces the
+  // manual estimate as the size signal; auto-defaulted from difficulty and
+  // locked once work starts (see estimateLocked).
+  scopeSize: text().notNull().default("M"),
   dueDate: timestamp({ mode: "date", withTimezone: true }),
   startedAt: timestamp({ mode: "date", withTimezone: true }),
   completedAt: timestamp({ mode: "date", withTimezone: true }),
@@ -637,6 +641,22 @@ export const appConfig = pgTable("app_config", {
   dueLeadHigh: integer().notNull().default(7),
   dueLeadMedium: integer().notNull().default(14),
   dueLeadLow: integer().notNull().default(30),
+  // ── XP weight tables ──────────────────────────────────────────
+  // Base difficulty weight per skill level (summed across a task's skills).
+  diffWeightBeginner: integer().notNull().default(1),
+  diffWeightIntermediate: integer().notNull().default(2),
+  diffWeightAdvanced: integer().notNull().default(4),
+  diffWeightExpert: integer().notNull().default(7),
+  // Scope (effort) size multipliers, as percentages.
+  scopeMultS: integer().notNull().default(100),
+  scopeMultM: integer().notNull().default(200),
+  scopeMultL: integer().notNull().default(300),
+  scopeMultXl: integer().notNull().default(500),
+  // Priority impact multipliers, as percentages.
+  priorityMultLow: integer().notNull().default(90),
+  priorityMultMedium: integer().notNull().default(100),
+  priorityMultHigh: integer().notNull().default(115),
+  priorityMultUrgent: integer().notNull().default(130),
 });
 
 /* ────────────────────── relations ─────────────────────── */

@@ -6,8 +6,13 @@ import {
   listTeams,
   listUsers,
 } from "@/lib/queries";
+import { getXpConfig } from "@/lib/config";
 import { TaskListView } from "@/components/games/task-list-view";
-import type { Priority, Status } from "@/components/games/status-select";
+import type {
+  Priority,
+  ScopeSize,
+  Status,
+} from "@/components/games/status-select";
 import type { AssigneeUser } from "@/components/games/assignee-select";
 import type { SkillLevel } from "@/components/games/task-meta-selects";
 
@@ -20,11 +25,12 @@ export default async function GameListPage({
   const game = await getGameBySlug(slug);
   if (!game) notFound();
 
-  const [taskRows, users, teams, skills] = await Promise.all([
+  const [taskRows, users, teams, skills, xpConfig] = await Promise.all([
     getTasksForGame(game.id),
     listUsers(),
     listTeams(),
     listSkills(),
+    getXpConfig(),
   ]);
 
   const gameDesignTeamId =
@@ -42,8 +48,8 @@ export default async function GameListPage({
     title: t.title,
     status: t.status as Status,
     priority: t.priority as Priority,
-    estimate: t.estimate,
-    estimateLocked: t.estimateLocked,
+    scopeSize: (t.scopeSize ?? "M") as ScopeSize,
+    scopeLocked: t.estimateLocked,
     dueDate: t.dueDate ?? null,
     position: t.position,
     teamId: t.teamId ?? null,
@@ -74,6 +80,7 @@ export default async function GameListPage({
       teams={teams.map((t) => ({ id: t.id, name: t.name, color: t.color }))}
       skills={skills.map((s) => ({ id: s.id, name: s.name, color: s.color }))}
       gameDesignTeamId={gameDesignTeamId}
+      xpConfig={xpConfig}
     />
   );
 }

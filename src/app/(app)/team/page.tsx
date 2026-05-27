@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
+import { getXpConfig } from "@/lib/config";
+import { taskEffortWeight } from "@/lib/xp";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TeamWorkloadChart,
@@ -34,18 +36,22 @@ export default async function TeamPage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const [users, assignments, dailyPlanRows] = await Promise.all([
+  const [users, assignments, dailyPlanRows, xpConfig] = await Promise.all([
     db.query.users.findMany({ orderBy: (u, { asc }) => [asc(u.name)] }),
     db.query.taskAssignees.findMany({
       with: {
         task: {
-          with: { game: { columns: { name: true, slug: true } } },
+          with: {
+            game: { columns: { name: true, slug: true } },
+            skills: { columns: { level: true } },
+          },
         },
       },
     }),
     db.query.dailyPlans.findMany({
       where: (dp, { eq }) => eq(dp.planDate, today),
     }),
+    getXpConfig(),
   ]);
 
   // Sum estimate points on each user's open (not done) tasks, and collect the
@@ -56,7 +62,12 @@ export default async function TeamPage() {
   for (const a of assignments) {
     const t = a.task;
     if (!t || t.status === "DONE") continue;
-    points.set(a.userId, (points.get(a.userId) ?? 0) + (t.estimate ?? 0));
+    const weight = taskEffortWeight(
+      t.skills.map((s) => s.level),
+      t.scopeSize,
+      xpConfig,
+    );
+    points.set(a.userId, (points.get(a.userId) ?? 0) + weight);
     taskCount.set(a.userId, (taskCount.get(a.userId) ?? 0) + 1);
     const arr = openByUser.get(a.userId) ?? [];
     arr.push({
@@ -81,7 +92,7 @@ export default async function TeamPage() {
   const data: WorkloadDatum[] = users
     .map((u) => ({
       name: u.name ?? u.email.split("@")[0],
-      points: points.get(u.id) ?? 0,
+      points: Math.round(points.get(u.id) ?? 0),
       tasks: taskCount.get(u.id) ?? 0,
     }))
     .sort((a, b) => b.points - a.points);

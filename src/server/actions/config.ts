@@ -8,6 +8,7 @@ import { appConfig, badges } from "@/db/schema";
 import { requireAdmin } from "@/lib/authz";
 import { slugify } from "@/lib/format";
 
+const weight = z.number().int().min(0).max(100000);
 const XpConfigInput = z.object({
   xpPerPoint: z.number().int().min(1).max(1000),
   onTimeMult: z.number().int().min(0).max(1000),
@@ -19,15 +20,56 @@ const XpConfigInput = z.object({
   titles: z
     .array(z.object({ from: z.number().int().min(1), title: z.string().min(1).max(40) }))
     .min(1),
+  difficultyWeight: z.object({
+    BEGINNER: weight,
+    INTERMEDIATE: weight,
+    ADVANCED: weight,
+    EXPERT: weight,
+  }),
+  scopeMult: z.object({
+    S: weight,
+    M: weight,
+    L: weight,
+    XL: weight,
+  }),
+  priorityMult: z.object({
+    LOW: weight,
+    MEDIUM: weight,
+    HIGH: weight,
+    URGENT: weight,
+  }),
 });
 
 export async function updateXpConfig(input: z.input<typeof XpConfigInput>) {
   await requireAdmin();
-  const parsed = XpConfigInput.parse(input);
+  const p = XpConfigInput.parse(input);
+  // Flatten the nested weight tables into the app_config columns.
+  const row = {
+    xpPerPoint: p.xpPerPoint,
+    onTimeMult: p.onTimeMult,
+    earlyMult: p.earlyMult,
+    lateMult: p.lateMult,
+    assistPct: p.assistPct,
+    levelBaseXp: p.levelBaseXp,
+    reopenReversalDays: p.reopenReversalDays,
+    titles: p.titles,
+    diffWeightBeginner: p.difficultyWeight.BEGINNER,
+    diffWeightIntermediate: p.difficultyWeight.INTERMEDIATE,
+    diffWeightAdvanced: p.difficultyWeight.ADVANCED,
+    diffWeightExpert: p.difficultyWeight.EXPERT,
+    scopeMultS: p.scopeMult.S,
+    scopeMultM: p.scopeMult.M,
+    scopeMultL: p.scopeMult.L,
+    scopeMultXl: p.scopeMult.XL,
+    priorityMultLow: p.priorityMult.LOW,
+    priorityMultMedium: p.priorityMult.MEDIUM,
+    priorityMultHigh: p.priorityMult.HIGH,
+    priorityMultUrgent: p.priorityMult.URGENT,
+  };
   await db
     .insert(appConfig)
-    .values({ id: "global", ...parsed })
-    .onConflictDoUpdate({ target: appConfig.id, set: parsed });
+    .values({ id: "global", ...row })
+    .onConflictDoUpdate({ target: appConfig.id, set: row });
   // Affects every page that renders levels/XP.
   revalidatePath("/", "layout");
   return { ok: true };

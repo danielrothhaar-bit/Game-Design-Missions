@@ -16,6 +16,24 @@ function rowToConfig(row: ConfigRow): XpConfig {
     levelBaseXp: row.levelBaseXp,
     reopenReversalDays: row.reopenReversalDays,
     titles: row.titles?.length ? row.titles : DEFAULT_TITLES,
+    difficultyWeight: {
+      BEGINNER: row.diffWeightBeginner,
+      INTERMEDIATE: row.diffWeightIntermediate,
+      ADVANCED: row.diffWeightAdvanced,
+      EXPERT: row.diffWeightExpert,
+    },
+    scopeMult: {
+      S: row.scopeMultS,
+      M: row.scopeMultM,
+      L: row.scopeMultL,
+      XL: row.scopeMultXl,
+    },
+    priorityMult: {
+      LOW: row.priorityMultLow,
+      MEDIUM: row.priorityMultMedium,
+      HIGH: row.priorityMultHigh,
+      URGENT: row.priorityMultUrgent,
+    },
   };
 }
 

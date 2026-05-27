@@ -13,14 +13,17 @@ import {
   setTaskTeam,
   updateTaskFields,
 } from "@/server/actions/tasks";
-import { InlineEditNumber, InlineEditText } from "./inline-edit-text";
+import { InlineEditText } from "./inline-edit-text";
 import {
   PRIORITIES,
   PrioritySelect,
+  ScopeSelect,
   StatusPill,
   type Priority,
+  type ScopeSize,
   type Status,
 } from "./status-select";
+import { xpForTaskClose, type XpConfig } from "@/lib/xp";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { AssigneeSelect, type AssigneeUser } from "./assignee-select";
 import { DueDatePopover } from "./due-date-popover";
@@ -38,8 +41,8 @@ type Task = {
   title: string;
   status: Status;
   priority: Priority;
-  estimate: number;
-  estimateLocked: boolean;
+  scopeSize: ScopeSize;
+  scopeLocked: boolean;
   dueDate: Date | null;
   position: number;
   teamId: string | null;
@@ -72,7 +75,7 @@ type SortKey =
   | "priority"
   | "assignee"
   | "due"
-  | "est";
+  | "scope";
 
 const STATUS_ORDER: Record<string, number> = {
   TODO: 0,
@@ -87,6 +90,7 @@ const PRIORITY_ORDER: Record<string, number> = {
   HIGH: 2,
   URGENT: 3,
 };
+const SCOPE_ORDER: Record<string, number> = { S: 0, M: 1, L: 2, XL: 3 };
 
 export function TaskListView({
   game,
@@ -95,6 +99,7 @@ export function TaskListView({
   teams,
   skills,
   gameDesignTeamId,
+  xpConfig,
 }: {
   game: { id: string; slug: string; name: string };
   initialTasks: Task[];
@@ -102,6 +107,7 @@ export function TaskListView({
   teams: TeamOption[];
   skills: SkillOption[];
   gameDesignTeamId: string | null;
+  xpConfig: XpConfig;
 }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [tab, setTab] = useState<"design" | "other">("design");
@@ -160,8 +166,8 @@ export function TaskListView({
         return assigneeName(t);
       case "due":
         return t.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-      case "est":
-        return t.estimate;
+      case "scope":
+        return SCOPE_ORDER[t.scopeSize] ?? 0;
     }
   }
 
@@ -244,7 +250,7 @@ export function TaskListView({
     const closing = next === "DONE" && before?.status !== "DONE";
     mutateLocal(id, {
       status: next,
-      estimateLocked: next !== "TODO" ? true : (before?.estimateLocked ?? false),
+      scopeLocked: next !== "TODO" ? true : (before?.scopeLocked ?? false),
     });
     try {
       await updateTaskFields({ id, status: next });
@@ -313,8 +319,8 @@ export function TaskListView({
             title: created.title,
             status: created.status as Status,
             priority: created.priority as Priority,
-            estimate: created.estimate,
-            estimateLocked: created.estimateLocked,
+            scopeSize: created.scopeSize as ScopeSize,
+            scopeLocked: created.estimateLocked,
             dueDate: created.dueDate,
             position: created.position,
             teamId: created.teamId,
@@ -462,8 +468,8 @@ export function TaskListView({
             />
             <SortHeader label="Due" col="due" sort={sort} onSort={toggleSort} />
             <SortHeader
-              label="Est"
-              col="est"
+              label="Scope"
+              col="scope"
               sort={sort}
               onSort={toggleSort}
               center
@@ -487,6 +493,7 @@ export function TaskListView({
                   users={users}
                   teams={teams}
                   skills={skills}
+                  xpConfig={xpConfig}
                   onChangeStatus={changeStatus}
                   onChangeAssignee={changeAssignee}
                   onChangeTeam={changeTeam}
@@ -605,6 +612,7 @@ function TaskRow({
   users,
   teams,
   skills,
+  xpConfig,
   onChangeStatus,
   onChangeAssignee,
   onChangeTeam,
@@ -617,6 +625,7 @@ function TaskRow({
   users: AssigneeUser[];
   teams: TeamOption[];
   skills: SkillOption[];
+  xpConfig: XpConfig;
   onChangeStatus: (id: string, next: Status) => void;
   onChangeAssignee: (id: string, userId: string | null) => void;
   onChangeTeam: (id: string, teamId: string | null) => void;
@@ -625,6 +634,16 @@ function TaskRow({
   onDelete: (id: string) => void;
 }) {
   const primary = task.assignees.find((a) => a.isPrimary) ?? task.assignees[0];
+
+  // Live "≈ XP" hints: what each scope size is worth on-time, given this
+  // task's skills + priority. Helps people scope honestly.
+  const skillLevels = task.skills.map((s) => s.level);
+  const xpHint = {
+    S: `≈ ${xpForTaskClose({ skillLevels, scopeSize: "S", priority: task.priority }, xpConfig)}`,
+    M: `≈ ${xpForTaskClose({ skillLevels, scopeSize: "M", priority: task.priority }, xpConfig)}`,
+    L: `≈ ${xpForTaskClose({ skillLevels, scopeSize: "L", priority: task.priority }, xpConfig)}`,
+    XL: `≈ ${xpForTaskClose({ skillLevels, scopeSize: "XL", priority: task.priority }, xpConfig)}`,
+  };
 
   return (
     <li
@@ -689,10 +708,11 @@ function TaskRow({
         value={task.dueDate}
         onChange={(d) => onCommitField(task.id, "dueDate", d)}
       />
-      <InlineEditNumber
-        value={task.estimate}
-        disabled={task.estimateLocked}
-        onCommit={(n) => onCommitField(task.id, "estimate", n)}
+      <ScopeSelect
+        value={task.scopeSize}
+        disabled={task.scopeLocked}
+        hint={xpHint}
+        onChange={(s) => onCommitField(task.id, "scopeSize", s)}
       />
       <button
         aria-label="Delete task"

@@ -87,6 +87,65 @@ export function PrioritySelect({
   );
 }
 
+export const SCOPE_SIZES = ["S", "M", "L", "XL"] as const;
+export type ScopeSize = (typeof SCOPE_SIZES)[number];
+const SCOPE_LABELS: Record<ScopeSize, string> = {
+  S: "Small",
+  M: "Medium",
+  L: "Large",
+  XL: "Massive",
+};
+
+export function ScopeSelect({
+  value,
+  disabled,
+  hint,
+  onChange,
+}: {
+  value: ScopeSize;
+  disabled?: boolean;
+  /** Optional per-size labels, e.g. "≈ 40 XP", shown in the menu. */
+  hint?: Partial<Record<ScopeSize, string>>;
+  onChange: (next: ScopeSize) => void;
+}) {
+  if (disabled) {
+    return (
+      <span
+        className="inline-flex h-6 items-center justify-center rounded px-1.5 text-xs font-medium text-muted-foreground"
+        title="Scope is locked once work starts"
+      >
+        {value}
+      </span>
+    );
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="inline-flex h-6 items-center justify-center gap-1 rounded px-1.5 text-xs font-medium hover:bg-accent">
+        {value}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" className="w-44">
+        {SCOPE_SIZES.map((s) => (
+          <DropdownMenuItem
+            key={s}
+            onClick={() => onChange(s)}
+            className="gap-2 text-xs"
+          >
+            <span className="w-7 font-medium">{s}</span>
+            <span className="text-muted-foreground">{SCOPE_LABELS[s]}</span>
+            {hint?.[s] ? (
+              <span className="ml-auto text-[10px] text-muted-foreground">
+                {hint[s]}
+              </span>
+            ) : s === value ? (
+              <Check className="ml-auto size-3" />
+            ) : null}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function PriorityFlag({ p }: { p: Priority }) {
   const color =
     p === "URGENT"

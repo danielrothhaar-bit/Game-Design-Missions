@@ -21,7 +21,15 @@ import {
   xpEvents,
 } from "./schema";
 import { STARTER_BADGES } from "../lib/badges";
-import { applyMultiplier, levelFromXp, xpForTaskClose } from "../lib/xp";
+import { applyMultiplier, levelFromXp, type ScopeSize } from "../lib/xp";
+
+/** Demo helper: map the legacy estimate points to a coarse scope bucket. */
+function scopeFromEstimate(estimate: number): ScopeSize {
+  if (estimate <= 2) return "S";
+  if (estimate <= 5) return "M";
+  if (estimate <= 8) return "L";
+  return "XL";
+}
 
 const STANDARD_PHASES: Array<{
   name: string;
@@ -419,6 +427,7 @@ async function seedTasks(
         priority: t.priority,
         discipline: t.discipline,
         estimate: t.estimate,
+        scopeSize: scopeFromEstimate(t.estimate),
         estimateLocked: t.status !== "TODO",
         dueDate: due,
         completedAt,
@@ -453,7 +462,7 @@ async function seedTasks(
     }
 
     if (t.status === "DONE" && due && completedAt) {
-      const base = xpForTaskClose(t.estimate);
+      const base = Math.max(1, t.estimate) * 10;
       const mult = completedAt < due ? 125 : completedAt > due ? 75 : 100;
       xpEventRows.push({
         userId: userRows[t.assigneeIdxs[0]].id,
