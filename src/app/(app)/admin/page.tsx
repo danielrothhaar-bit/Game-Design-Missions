@@ -3,13 +3,14 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listSkills, listTeams } from "@/lib/queries";
+import { listSkills, listTeams, listGameStatuses } from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
 import { getPhaseTemplates } from "@/db/phase-templates";
 import { SkillsAdmin } from "@/components/admin/skills-admin";
 import { PhaseTasksAdmin } from "@/components/admin/phase-tasks-admin";
 import { XpConfigAdmin } from "@/components/admin/xp-config-admin";
 import { BadgesAdmin } from "@/components/admin/badges-admin";
+import { GameStatusesAdmin } from "@/components/admin/game-statuses-admin";
 
 export const metadata = { title: "Admin" };
 
@@ -24,13 +25,14 @@ export default async function AdminPage() {
   // Authoritative role check against the DB (not the JWT).
   if (me.role !== "OWNER" && me.role !== "ADMIN") redirect("/my-work");
 
-  const [skills, teams, phaseTemplates, xpConfig, badgeRows] =
+  const [skills, teams, phaseTemplates, xpConfig, badgeRows, gameStatuses] =
     await Promise.all([
       listSkills(true),
       listTeams(),
       getPhaseTemplates(),
       getXpConfig(),
       db.query.badges.findMany({ orderBy: (b, { asc }) => [asc(b.name)] }),
+      listGameStatuses(),
     ]);
 
   return (
@@ -47,6 +49,7 @@ export default async function AdminPage() {
           <TabsTrigger value="xp">XP &amp; Levels</TabsTrigger>
           <TabsTrigger value="badges">Badges</TabsTrigger>
           <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="statuses">Game Statuses</TabsTrigger>
           <TabsTrigger value="phases">Phase Tasks</TabsTrigger>
         </TabsList>
 
@@ -100,6 +103,23 @@ export default async function AdminPage() {
                   name: s.name,
                   color: s.color,
                   archived: s.archived,
+                }))}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="statuses" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Game statuses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GameStatusesAdmin
+                initial={gameStatuses.map((s) => ({
+                  slug: s.slug,
+                  label: s.label,
+                  color: s.color,
                 }))}
               />
             </CardContent>

@@ -1,13 +1,18 @@
 import { db } from "@/db";
-import { listGames } from "@/lib/queries";
+import { listGames, listGameStatuses } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { gameStatusLabel } from "@/lib/format";
 
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const games = await listGames();
+  const [games, statuses] = await Promise.all([
+    listGames(),
+    listGameStatuses(),
+  ]);
+  const statusLabel = (g: { statusSlug: string | null; status: string }) =>
+    statuses.find((s) => s.slug === (g.statusSlug ?? g.status))?.label ??
+    (g.statusSlug ?? g.status);
 
   const gameStats = await Promise.all(
     games.map(async (g) => {
@@ -49,7 +54,7 @@ export default async function DashboardPage() {
               <div>
                 <CardTitle className="text-base">{s.game.name}</CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {gameStatusLabel(s.game.status)}
+                  {statusLabel(s.game)}
                   {s.daysToLaunch !== null
                     ? s.daysToLaunch >= 0
                       ? ` · ${s.daysToLaunch}d to launch`

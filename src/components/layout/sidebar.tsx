@@ -8,23 +8,26 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
 import { progressInLevel, titleForLevel, type XpConfig } from "@/lib/xp";
-import { GAME_STATUSES, gameStatusLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Game = {
   slug: string;
   name: string;
   coverColor: string;
-  status: string;
+  statusSlug: string;
   isLead: boolean;
 };
 
+type StatusOption = { slug: string; label: string };
+
 export function Sidebar({
   games,
+  statuses,
   user,
   xpConfig,
 }: {
   games: Game[];
+  statuses: StatusOption[];
   user: {
     name: string | null;
     email: string;
@@ -37,10 +40,18 @@ export function Sidebar({
   const p = progressInLevel(user.totalXp, xpConfig);
   const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
 
-  const grouped = GAME_STATUSES.map((status) => ({
-    status,
-    games: games.filter((g) => g.status === status),
-  })).filter((group) => group.games.length > 0);
+  const knownSlugs = new Set(statuses.map((s) => s.slug));
+  const grouped = [
+    ...statuses.map((s) => ({
+      label: s.label,
+      games: games.filter((g) => g.statusSlug === s.slug),
+    })),
+    // Any games whose status isn't a known option (legacy/edge) go last.
+    {
+      label: "Other",
+      games: games.filter((g) => !knownSlugs.has(g.statusSlug)),
+    },
+  ].filter((group) => group.games.length > 0);
 
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
@@ -94,8 +105,8 @@ export function Sidebar({
             <div className="space-y-1">
               {grouped.map((group) => (
                 <GameGroup
-                  key={group.status}
-                  label={gameStatusLabel(group.status)}
+                  key={group.label}
+                  label={group.label}
                   games={group.games}
                 />
               ))}

@@ -9,18 +9,9 @@ import { auth } from "@/lib/auth";
 import { slugify } from "@/lib/format";
 import { getPhaseTemplates } from "@/db/phase-templates";
 
-const GameStatusEnum = z.enum([
-  "NEW",
-  "OPEN",
-  "LEGACY",
-  "ACQUISITION",
-  "CLIENT",
-  "PROTOTYPE",
-]);
-
 const UpdateInput = z.object({
   id: z.string(),
-  status: GameStatusEnum.optional(),
+  statusSlug: z.string().max(40).optional(),
   launchDate: z.union([z.date(), z.null()]).optional(),
   name: z.string().min(1).max(120).optional(),
   description: z.union([z.string(), z.null()]).optional(),
@@ -61,7 +52,7 @@ export async function updateGame(input: z.input<typeof UpdateInput>) {
 
 const CreateGameInput = z.object({
   name: z.string().min(1).max(120),
-  status: GameStatusEnum.default("NEW"),
+  statusSlug: z.string().max(40).default("NEW"),
   coverColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#7c3aed"),
   description: z.string().max(2000).optional(),
   launchDate: z.union([z.date(), z.null()]).optional(),
@@ -88,7 +79,7 @@ export async function createGame(input: z.input<typeof CreateGameInput>) {
     .values({
       name: parsed.name,
       slug,
-      status: parsed.status,
+      statusSlug: parsed.statusSlug,
       coverColor: parsed.coverColor,
       description: parsed.description,
       launchDate: parsed.launchDate ?? null,

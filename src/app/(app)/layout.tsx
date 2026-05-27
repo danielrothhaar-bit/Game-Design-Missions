@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
-import { listGames, getUser } from "@/lib/queries";
+import { listGames, getUser, listGameStatuses } from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
@@ -15,21 +15,23 @@ export default async function AppLayout({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const [games, user, xpConfig] = await Promise.all([
+  const [games, user, xpConfig, statuses] = await Promise.all([
     listGames(),
     getUser(session.user.id),
     getXpConfig(),
+    listGameStatuses(),
   ]);
   if (!user) redirect("/login");
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar
+        statuses={statuses.map((s) => ({ slug: s.slug, label: s.label }))}
         games={games.map((g) => ({
           slug: g.slug,
           name: g.name,
           coverColor: g.coverColor,
-          status: g.status,
+          statusSlug: g.statusSlug ?? g.status,
           isLead: g.leadUserId === user.id,
         }))}
         user={{

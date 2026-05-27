@@ -8,6 +8,12 @@ export async function listTeams() {
   });
 }
 
+export async function listGameStatuses() {
+  return db.query.gameStatusOptions.findMany({
+    orderBy: (s, { asc }) => [asc(s.order), asc(s.label)],
+  });
+}
+
 export async function listSkills(includeArchived = false) {
   return db.query.skills.findMany({
     where: includeArchived ? undefined : (s, { eq: eqOp }) => eqOp(s.archived, false),

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { listGameStatuses } from "@/lib/queries";
 import { NewGameForm } from "./new-game-form";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +9,8 @@ export const metadata = { title: "New Game" };
 export default async function NewGamePage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+
+  const statuses = await listGameStatuses();
 
   return (
     <div className="mx-auto max-w-xl space-y-6 p-6">
@@ -18,7 +21,9 @@ export default async function NewGamePage() {
           list, each assigned to its responsible team.
         </p>
       </header>
-      <NewGameForm />
+      <NewGameForm
+        statuses={statuses.map((s) => ({ slug: s.slug, label: s.label }))}
+      />
     </div>
   );
 }

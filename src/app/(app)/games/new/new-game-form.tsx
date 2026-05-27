@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import { GAME_STATUSES, gameStatusLabel } from "@/lib/format";
 import { createGame } from "@/server/actions/games";
+
+type StatusOption = { slug: string; label: string };
 
 const COLORS = [
   "#7c3aed",
@@ -25,11 +26,13 @@ const COLORS = [
   "#64748b",
 ];
 
-export function NewGameForm() {
+export function NewGameForm({ statuses }: { statuses: StatusOption[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [name, setName] = useState("");
-  const [status, setStatus] = useState<(typeof GAME_STATUSES)[number]>("NEW");
+  const [statusSlug, setStatusSlug] = useState<string>(
+    statuses[0]?.slug ?? "NEW",
+  );
   const [coverColor, setCoverColor] = useState(COLORS[0]);
   const [description, setDescription] = useState("");
   const [launchDate, setLaunchDate] = useState("");
@@ -45,7 +48,7 @@ export function NewGameForm() {
       try {
         const res = await createGame({
           name: name.trim(),
-          status,
+          statusSlug,
           coverColor,
           description: description.trim() || undefined,
           launchDate: launchDate ? new Date(launchDate) : null,
@@ -78,18 +81,18 @@ export function NewGameForm() {
           <div className="space-y-2">
             <Label>Category</Label>
             <div className="flex flex-wrap gap-2">
-              {GAME_STATUSES.map((s) => (
+              {statuses.map((s) => (
                 <button
-                  key={s}
+                  key={s.slug}
                   type="button"
-                  onClick={() => setStatus(s)}
+                  onClick={() => setStatusSlug(s.slug)}
                   className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                    status === s
+                    statusSlug === s.slug
                       ? "border-foreground/40 bg-foreground/10 text-foreground"
                       : "border-border text-muted-foreground hover:bg-accent"
                   }`}
                 >
-                  {gameStatusLabel(s)}
+                  {s.label}
                 </button>
               ))}
             </div>

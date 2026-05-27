@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGameBySlug, listUsers } from "@/lib/queries";
-import { GAME_STATUSES } from "@/lib/format";
+import {
+  getGameBySlug,
+  listGameStatuses,
+  listUsers,
+} from "@/lib/queries";
 import {
   GameLaunchDatePicker,
   GameLeadPicker,
@@ -16,7 +19,11 @@ export default async function GameLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [game, users] = await Promise.all([getGameBySlug(slug), listUsers()]);
+  const [game, users, statuses] = await Promise.all([
+    getGameBySlug(slug),
+    listUsers(),
+    listGameStatuses(),
+  ]);
   if (!game) notFound();
 
   return (
@@ -30,11 +37,12 @@ export default async function GameLayout({
           <h1 className="truncate text-lg font-semibold">{game.name}</h1>
           <GameStatusPicker
             gameId={game.id}
-            initial={
-              (GAME_STATUSES as readonly string[]).includes(game.status)
-                ? (game.status as (typeof GAME_STATUSES)[number])
-                : "NEW"
-            }
+            initialSlug={game.statusSlug ?? game.status}
+            statuses={statuses.map((s) => ({
+              slug: s.slug,
+              label: s.label,
+              color: s.color,
+            }))}
           />
           <GameLaunchDatePicker
             gameId={game.id}

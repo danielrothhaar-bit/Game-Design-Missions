@@ -16,15 +16,10 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import {
-  GAME_STATUSES,
-  gameStatusColor,
-  gameStatusLabel,
-} from "@/lib/format";
 import { updateGame } from "@/server/actions/games";
 import { AssigneeSelect, type AssigneeUser } from "./assignee-select";
 
-type Status = (typeof GAME_STATUSES)[number];
+export type StatusOption = { slug: string; label: string; color: string };
 
 export function GameLeadPicker({
   gameId,
@@ -57,26 +52,39 @@ export function GameLeadPicker({
   );
 }
 
+function statusPillStyle(color: string) {
+  return {
+    backgroundColor: `${color}22`,
+    color,
+    borderColor: `${color}55`,
+  } as const;
+}
+
 export function GameStatusPicker({
   gameId,
-  initial,
+  initialSlug,
+  statuses,
 }: {
   gameId: string;
-  initial: Status;
+  initialSlug: string;
+  statuses: StatusOption[];
 }) {
-  const [status, setStatus] = useState<Status>(initial);
+  const [slug, setSlug] = useState<string>(initialSlug);
   const [pending, setPending] = useState(false);
+  const current =
+    statuses.find((s) => s.slug === slug) ??
+    ({ slug, label: slug, color: "#71717a" } as StatusOption);
 
-  async function change(next: Status) {
-    if (next === status) return;
-    const before = status;
-    setStatus(next);
+  async function change(next: StatusOption) {
+    if (next.slug === slug) return;
+    const before = slug;
+    setSlug(next.slug);
     setPending(true);
     try {
-      await updateGame({ id: gameId, status: next });
-      toast.success(`Status changed to ${gameStatusLabel(next)}`);
+      await updateGame({ id: gameId, statusSlug: next.slug });
+      toast.success(`Status changed to ${next.label}`);
     } catch {
-      setStatus(before);
+      setSlug(before);
       toast.error("Could not update status");
     } finally {
       setPending(false);
@@ -87,23 +95,25 @@ export function GameStatusPicker({
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={pending}
-        className={`inline-flex h-6 items-center rounded border px-2 text-[10px] font-medium uppercase tracking-wider transition-colors ${gameStatusColor(status)}`}
+        className="inline-flex h-6 items-center rounded border px-2 text-[10px] font-medium uppercase tracking-wider transition-colors"
+        style={statusPillStyle(current.color)}
       >
-        {gameStatusLabel(status)}
+        {current.label}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-44">
-        {GAME_STATUSES.map((s) => (
+        {statuses.map((s) => (
           <DropdownMenuItem
-            key={s}
+            key={s.slug}
             onClick={() => change(s)}
             className="text-xs"
           >
             <span
-              className={`inline-flex h-5 items-center rounded border px-1.5 text-[10px] font-medium uppercase tracking-wider ${gameStatusColor(s)}`}
+              className="inline-flex h-5 items-center rounded border px-1.5 text-[10px] font-medium uppercase tracking-wider"
+              style={statusPillStyle(s.color)}
             >
-              {gameStatusLabel(s)}
+              {s.label}
             </span>
-            {s === status ? <Check className="ml-auto size-3" /> : null}
+            {s.slug === slug ? <Check className="ml-auto size-3" /> : null}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

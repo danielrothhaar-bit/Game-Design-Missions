@@ -1,7 +1,20 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 import { db } from "./index";
-import { badges, skills, teams } from "./schema";
+import { badges, gameStatusOptions, games, skills, teams } from "./schema";
 import { STARTER_BADGES } from "../lib/badges";
+
+export const DEFAULT_GAME_STATUSES: Array<{
+  slug: string;
+  label: string;
+  color: string;
+}> = [
+  { slug: "NEW", label: "New", color: "#3b82f6" },
+  { slug: "PROTOTYPE", label: "Prototype", color: "#06b6d4" },
+  { slug: "CLIENT", label: "Client", color: "#d946ef" },
+  { slug: "OPEN", label: "Open", color: "#10b981" },
+  { slug: "LEGACY", label: "Legacy", color: "#71717a" },
+  { slug: "ACQUISITION", label: "Acquisition", color: "#f59e0b" },
+];
 
 export const DEFAULT_TEAMS: Array<{ name: string; slug: string; color: string }> =
   [
@@ -69,7 +82,21 @@ export async function seedDefaults(): Promise<void> {
       await db.insert(badges).values(b);
     }
   }
+  for (const [i, s] of DEFAULT_GAME_STATUSES.entries()) {
+    const existing = await db.query.gameStatusOptions.findFirst({
+      where: eq(gameStatusOptions.slug, s.slug),
+    });
+    if (!existing) {
+      await db.insert(gameStatusOptions).values({ ...s, order: i });
+    }
+  }
+  // Backfill statusSlug from the legacy enum column for any game missing it.
+  await db
+    .update(games)
+    .set({ statusSlug: sql`${games.status}` })
+    .where(isNull(games.statusSlug));
+
   console.log(
-    `✓ defaults seeded (${DEFAULT_TEAMS.length} teams, ${DEFAULT_SKILLS.length} skills, ${STARTER_BADGES.length} badges)`,
+    `✓ defaults seeded (${DEFAULT_TEAMS.length} teams, ${DEFAULT_SKILLS.length} skills, ${STARTER_BADGES.length} badges, ${DEFAULT_GAME_STATUSES.length} statuses)`,
   );
 }

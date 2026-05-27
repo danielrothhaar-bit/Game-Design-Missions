@@ -202,6 +202,15 @@ export const skills = pgTable(
   (t) => [uniqueIndex("skill_slug_idx").on(t.slug)],
 );
 
+// Editable game categories (was a hard-coded enum). `slug` is the value
+// stored on game.statusSlug.
+export const gameStatusOptions = pgTable("game_status_option", {
+  slug: varchar({ length: 40 }).primaryKey(),
+  label: varchar({ length: 60 }).notNull(),
+  color: varchar({ length: 16 }).notNull().default("#3b82f6"),
+  order: integer().notNull().default(0),
+});
+
 /* ─────────────── phase task templates ─────────────── */
 
 export const phaseTemplates = pgTable("phase_template", {
@@ -238,6 +247,7 @@ export const games = pgTable(
     slug: varchar({ length: 140 }).notNull(),
     description: text(),
     status: gameStatus().notNull().default("NEW"),
+    statusSlug: varchar({ length: 40 }),
     coverColor: varchar({ length: 16 }).notNull().default("#7c3aed"),
     coverImage: text(),
     launchDate: timestamp({ mode: "date", withTimezone: true }),
@@ -688,3 +698,4 @@ export type XpEvent = typeof xpEvents.$inferSelect;
 export type Team = typeof teams.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
 export type AppConfig = typeof appConfig.$inferSelect;
+export type GameStatusOption = typeof gameStatusOptions.$inferSelect;

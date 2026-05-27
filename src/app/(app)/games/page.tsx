@@ -1,13 +1,17 @@
 import Link from "next/link";
-import { listGames } from "@/lib/queries";
+import { listGames, listGameStatuses } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { gameStatusLabel } from "@/lib/format";
 
 export const metadata = { title: "All Games" };
 
 export default async function GamesIndexPage() {
-  const games = await listGames();
+  const [games, statuses] = await Promise.all([
+    listGames(),
+    listGameStatuses(),
+  ]);
+  const statusBy = new Map(statuses.map((s) => [s.slug, s]));
+  const statusFor = (g: { statusSlug: string | null; status: string }) =>
+    statusBy.get(g.statusSlug ?? g.status);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
@@ -42,9 +46,25 @@ export default async function GamesIndexPage() {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold leading-tight">{g.name}</h3>
-                    <Badge variant="secondary" className="shrink-0">
-                      {gameStatusLabel(g.status)}
-                    </Badge>
+                    {(() => {
+                      const s = statusFor(g);
+                      return (
+                        <span
+                          className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+                          style={
+                            s
+                              ? {
+                                  backgroundColor: `${s.color}22`,
+                                  color: s.color,
+                                  borderColor: `${s.color}55`,
+                                }
+                              : undefined
+                          }
+                        >
+                          {s?.label ?? g.statusSlug ?? g.status}
+                        </span>
+                      );
+                    })()}
                   </div>
                   {g.description ? (
                     <p className="line-clamp-2 text-sm text-muted-foreground">
