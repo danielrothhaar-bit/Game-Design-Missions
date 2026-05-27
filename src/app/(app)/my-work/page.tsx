@@ -17,8 +17,15 @@ export default async function MyWorkPage() {
   const userId = await effectiveUserId();
   if (!userId) redirect("/login");
 
-  const [me, assignments, streak, badges, proficiencyRows, allSkills] =
-    await Promise.all([
+  const [
+    me,
+    assignments,
+    streak,
+    badges,
+    proficiencyRows,
+    allSkills,
+    unassignedRows,
+  ] = await Promise.all([
       db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
       db.query.taskAssignees.findMany({
         where: (a, { eq }) => eq(a.userId, userId),
@@ -40,6 +47,13 @@ export default async function MyWorkPage() {
         where: (us, { eq }) => eq(us.userId, userId),
       }),
       listSkills(),
+      db.query.tasks.findMany({
+        where: (t, { ne }) => ne(t.status, "DONE"),
+        with: {
+          assignees: { columns: { userId: true } },
+          game: { columns: { name: true, slug: true } },
+        },
+      }),
     ]);
 
   if (!me) redirect("/login");
@@ -175,6 +189,20 @@ export default async function MyWorkPage() {
     })
     .sort((a, b) => b.total - a.total);
 
+  const unassignedData = unassignedRows
+    .filter((t) => t.assignees.length === 0)
+    .map((t) => ({
+      id: t.id,
+      title: t.title,
+      priority: t.priority,
+      gameName: t.game.name,
+      gameSlug: t.game.slug,
+    }))
+    .sort(
+      (a, b) =>
+        (PRIORITY_RANK[a.priority] ?? 9) - (PRIORITY_RANK[b.priority] ?? 9),
+    );
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <header className="flex flex-col gap-1">
@@ -261,6 +289,7 @@ export default async function MyWorkPage() {
         open={openData}
         completed={completedProjects}
         summary={summaryData}
+        unassigned={unassignedData}
       />
     </div>
   );

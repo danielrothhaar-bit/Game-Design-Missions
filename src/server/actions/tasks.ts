@@ -25,6 +25,7 @@ import {
   type XpConfig,
 } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
+import { effectiveUserId } from "@/lib/impersonation";
 
 const TaskStatusEnum = z.enum([
   "TODO",
@@ -248,6 +249,31 @@ export async function setTaskSkills(
     );
   }
   await db.update(tasks).set({ updatedAt: new Date() }).where(eq(tasks.id, taskId));
+  revalidatePath(`/games/${task.game.slug}`);
+  return { ok: true };
+}
+
+export async function claimTask(taskId: string) {
+  const userId = await effectiveUserId();
+  if (!userId) throw new Error("Not authenticated");
+  const task = await db.query.tasks.findFirst({
+    where: eq(tasks.id, taskId),
+    with: { game: true },
+  });
+  if (!task) throw new Error("Task not found");
+  await db
+    .insert(taskAssignees)
+    .values({ taskId, userId, isPrimary: true })
+    .onConflictDoNothing();
+  await db.insert(activities).values({
+    entityType: "task",
+    entityId: taskId,
+    gameId: task.gameId,
+    actorId: userId,
+    verb: "ASSIGNED",
+    payload: { userId, claimed: true } as Record<string, unknown>,
+  });
+  revalidatePath("/my-work");
   revalidatePath(`/games/${task.game.slug}`);
   return { ok: true };
 }

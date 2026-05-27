@@ -1,8 +1,21 @@
 "use client";
 
+import { useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { taskPriorityColor, taskStatusColor, taskStatusLabel } from "@/lib/format";
+import { claimTask } from "@/server/actions/tasks";
+
+export type UnassignedTask = {
+  id: string;
+  title: string;
+  priority: string;
+  gameName: string;
+  gameSlug: string;
+};
 
 export type OpenTask = {
   id: string;
@@ -31,19 +44,38 @@ export function MyWorkTabs({
   open,
   completed,
   summary,
+  unassigned,
 }: {
   open: OpenTask[];
   completed: CompletedProject[];
   summary: SkillSummary[];
+  unassigned: UnassignedTask[];
 }) {
   const completedCount = completed.reduce((s, p) => s + p.tasks.length, 0);
   // eslint-disable-next-line react-hooks/purity -- overdue comparison at render
   const now = Date.now();
+  const router = useRouter();
+  const [claiming, startClaim] = useTransition();
+
+  function claim(id: string) {
+    startClaim(async () => {
+      try {
+        await claimTask(id);
+        toast.success("Task claimed — it's now yours.");
+        router.refresh();
+      } catch {
+        toast.error("Could not claim task");
+      }
+    });
+  }
 
   return (
     <Tabs defaultValue="open">
       <TabsList>
         <TabsTrigger value="open">Open ({open.length})</TabsTrigger>
+        <TabsTrigger value="unassigned">
+          Unassigned ({unassigned.length})
+        </TabsTrigger>
         <TabsTrigger value="completed">
           Completed ({completedCount})
         </TabsTrigger>
@@ -91,6 +123,49 @@ export function MyWorkTabs({
                       </span>
                     ) : null}
                   </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </TabsContent>
+
+      {/* Unassigned — claimable */}
+      <TabsContent value="unassigned" className="mt-4">
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
+          {unassigned.length === 0 ? (
+            <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+              No unassigned tasks — everything has an owner.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {unassigned.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex items-center gap-3 px-6 py-3"
+                >
+                  <span
+                    className={`w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
+                  >
+                    {t.priority.toLowerCase()}
+                  </span>
+                  <Link
+                    href={`/games/${t.gameSlug}`}
+                    className="flex-1 truncate hover:underline"
+                  >
+                    {t.title}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">
+                    {t.gameName}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={claiming}
+                    onClick={() => claim(t.id)}
+                  >
+                    Claim
+                  </Button>
                 </li>
               ))}
             </ul>
