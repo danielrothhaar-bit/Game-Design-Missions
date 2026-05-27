@@ -1,7 +1,7 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import { LogOut, User as UserIcon } from "lucide-react";
+import { logoutAction } from "@/server/actions/auth-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -60,7 +60,7 @@ export function UserMenu({
           }
         />
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+        <DropdownMenuItem onClick={() => logoutAction()}>
           <LogOut className="size-4" />
           Sign out
         </DropdownMenuItem>

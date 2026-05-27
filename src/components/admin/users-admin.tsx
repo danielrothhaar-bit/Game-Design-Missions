@@ -254,7 +254,6 @@ function UserRow({
   onViewAs: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const setCount = Object.values(user.skills).filter((l) => l > 0).length;
 
   return (
     <li className="rounded-lg border border-border">
@@ -298,8 +297,7 @@ function UserRow({
           <ChevronRight
             className={cn("size-3.5 transition-transform", open && "rotate-90")}
           />
-          Skills
-          <span className="text-muted-foreground">({setCount})</span>
+          Settings
         </Button>
         <Button
           variant="ghost"

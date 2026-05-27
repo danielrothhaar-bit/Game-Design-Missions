@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight, LogOut, Plus, Trophy } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { logoutAction } from "@/server/actions/auth-actions";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
@@ -111,7 +111,7 @@ export function Sidebar({
           </p>
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => logoutAction()}
           className="mt-1 flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
         >
           <LogOut className="size-4 shrink-0 opacity-80" />
@@ -250,7 +250,7 @@ function GameGroup({
   label: string;
   games: Game[];
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <div>
       <button
