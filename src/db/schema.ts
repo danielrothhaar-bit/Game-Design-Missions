@@ -28,6 +28,8 @@ export const gameStatus = pgEnum("game_status", [
   "OPEN",
   "LEGACY",
   "ACQUISITION",
+  "CLIENT",
+  "PROTOTYPE",
 ]);
 
 export const phaseKind = pgEnum("phase_kind", [

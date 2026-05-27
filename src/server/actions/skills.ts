@@ -5,16 +5,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { skills } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/authz";
 import { slugify } from "@/lib/format";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
-    throw new Error("Admins only");
-  }
-}
 
 const CreateSkill = z.object({
   name: z.string().min(1).max(80),

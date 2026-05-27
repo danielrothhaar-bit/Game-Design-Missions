@@ -58,6 +58,8 @@ export const disciplineLabel = (d: string | null) =>
 
 const GAME_STATUS_LABEL: Record<string, string> = {
   NEW: "New",
+  PROTOTYPE: "Prototype",
+  CLIENT: "Client",
   OPEN: "Open",
   LEGACY: "Legacy",
   ACQUISITION: "Acquisition",
@@ -66,6 +68,8 @@ export const gameStatusLabel = (s: string) => GAME_STATUS_LABEL[s] ?? s;
 
 const GAME_STATUS_COLOR: Record<string, string> = {
   NEW: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  PROTOTYPE: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+  CLIENT: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30",
   OPEN: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   LEGACY: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
   ACQUISITION: "bg-amber-500/15 text-amber-300 border-amber-500/30",
@@ -73,4 +77,11 @@ const GAME_STATUS_COLOR: Record<string, string> = {
 export const gameStatusColor = (s: string) =>
   GAME_STATUS_COLOR[s] ?? GAME_STATUS_COLOR.NEW;
 
-export const GAME_STATUSES = ["NEW", "OPEN", "LEGACY", "ACQUISITION"] as const;
+export const GAME_STATUSES = [
+  "NEW",
+  "PROTOTYPE",
+  "CLIENT",
+  "OPEN",
+  "LEGACY",
+  "ACQUISITION",
+] as const;

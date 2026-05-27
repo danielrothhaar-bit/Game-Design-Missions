@@ -5,15 +5,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { appConfig, badges } from "@/db/schema";
-import { auth } from "@/lib/auth";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
-    throw new Error("Admins only");
-  }
-}
+import { requireAdmin } from "@/lib/authz";
 
 const XpConfigInput = z.object({
   xpPerPoint: z.number().int().min(1).max(1000),

@@ -9,7 +9,14 @@ import { auth } from "@/lib/auth";
 import { slugify } from "@/lib/format";
 import { getPhaseTemplates } from "@/db/phase-templates";
 
-const GameStatusEnum = z.enum(["NEW", "OPEN", "LEGACY", "ACQUISITION"]);
+const GameStatusEnum = z.enum([
+  "NEW",
+  "OPEN",
+  "LEGACY",
+  "ACQUISITION",
+  "CLIENT",
+  "PROTOTYPE",
+]);
 
 const UpdateInput = z.object({
   id: z.string(),

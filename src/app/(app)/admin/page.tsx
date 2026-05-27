@@ -16,14 +16,13 @@ export const metadata = { title: "Admin" };
 export default async function AdminPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
-    redirect("/my-work");
-  }
 
   const me = await db.query.users.findFirst({
     where: (u, { eq }) => eq(u.id, session.user.id),
   });
   if (!me) redirect("/login");
+  // Authoritative role check against the DB (not the JWT).
+  if (me.role !== "OWNER" && me.role !== "ADMIN") redirect("/my-work");
 
   const [skills, teams, phaseTemplates, xpConfig, badgeRows] =
     await Promise.all([

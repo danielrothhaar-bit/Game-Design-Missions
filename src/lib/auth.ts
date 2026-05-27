@@ -37,6 +37,17 @@ function isAllowed(email: string | null | undefined): boolean {
   );
 }
 
+function adminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAdminEmail(email: string): boolean {
+  return adminEmails().includes(email.toLowerCase());
+}
+
 const googleEnabled = Boolean(
   process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
 );
@@ -72,18 +83,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const expected = process.env.DEV_PASSCODE;
         if (!expected || passcode !== expected) return null;
 
+        const wantOwner = isAdminEmail(email);
+
         const existing = await db.query.users.findFirst({
           where: eq(users.email, email),
         });
-        if (existing) return existing;
+        if (existing) {
+          // Promote to OWNER if they've been added to ADMIN_EMAILS.
+          if (wantOwner && existing.role !== "OWNER") {
+            await db
+              .update(users)
+              .set({ role: "OWNER" })
+              .where(eq(users.id, existing.id));
+            return { ...existing, role: "OWNER" };
+          }
+          return existing;
+        }
 
+        // First user ever, or an admin email, becomes OWNER.
+        const userCount = await db.$count(users);
+        const role = wantOwner || userCount === 0 ? "OWNER" : "DESIGNER";
         const [created] = await db
           .insert(users)
-          .values({
-            email,
-            name: email.split("@")[0],
-            role: "DESIGNER",
-          })
+          .values({ email, name: email.split("@")[0], role })
           .returning();
         return created;
       },
