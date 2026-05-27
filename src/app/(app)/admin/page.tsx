@@ -18,6 +18,7 @@ import { BadgesAdmin } from "@/components/admin/badges-admin";
 import { GameStatusesAdmin } from "@/components/admin/game-statuses-admin";
 import { UsersAdmin } from "@/components/admin/users-admin";
 import { DivisionsAdmin } from "@/components/admin/divisions-admin";
+import { TaskDefaultsAdmin } from "@/components/admin/task-defaults-admin";
 
 export const metadata = { title: "Admin" };
 
@@ -51,6 +52,8 @@ export default async function AdminPage() {
     db.query.users.findMany({ orderBy: (u, { asc }) => [asc(u.name)] }),
     db.query.userSkills.findMany(),
   ]);
+
+  const configRow = await db.query.appConfig.findFirst();
 
   const [divisionRows, userDivisionRows, completedAssignments] =
     await Promise.all([
@@ -189,6 +192,22 @@ export default async function AdminPage() {
             </CardHeader>
             <CardContent>
               <XpConfigAdmin initial={xpConfig} />
+            </CardContent>
+          </Card>
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-base">Task defaults</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TaskDefaultsAdmin
+                initial={{
+                  autoDueDates: configRow?.autoDueDates ?? true,
+                  dueLeadUrgent: configRow?.dueLeadUrgent ?? 2,
+                  dueLeadHigh: configRow?.dueLeadHigh ?? 7,
+                  dueLeadMedium: configRow?.dueLeadMedium ?? 14,
+                  dueLeadLow: configRow?.dueLeadLow ?? 30,
+                }}
+              />
             </CardContent>
           </Card>
         </TabsContent>

@@ -33,6 +33,27 @@ export async function updateXpConfig(input: z.input<typeof XpConfigInput>) {
   return { ok: true };
 }
 
+const TaskDefaultsInput = z.object({
+  autoDueDates: z.boolean(),
+  dueLeadUrgent: z.number().int().min(0).max(3650),
+  dueLeadHigh: z.number().int().min(0).max(3650),
+  dueLeadMedium: z.number().int().min(0).max(3650),
+  dueLeadLow: z.number().int().min(0).max(3650),
+});
+
+export async function updateTaskDefaults(
+  input: z.input<typeof TaskDefaultsInput>,
+) {
+  await requireAdmin();
+  const parsed = TaskDefaultsInput.parse(input);
+  await db
+    .insert(appConfig)
+    .values({ id: "global", ...parsed })
+    .onConflictDoUpdate({ target: appConfig.id, set: parsed });
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
 const BadgeInput = z.object({
   code: z.string(),
   name: z.string().min(1).max(80).optional(),

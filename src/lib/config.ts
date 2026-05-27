@@ -18,6 +18,43 @@ function rowToConfig(row: ConfigRow): XpConfig {
   };
 }
 
+export type TaskDefaults = {
+  autoDueDates: boolean;
+  leadDays: Record<"URGENT" | "HIGH" | "MEDIUM" | "LOW", number>;
+};
+
+/** Reads task-creation defaults (auto due dates), ensuring the row exists. */
+export async function getTaskDefaults(): Promise<TaskDefaults> {
+  await getXpConfig(); // ensures the singleton row exists
+  const row = await db.query.appConfig.findFirst({
+    where: eq(appConfig.id, "global"),
+  });
+  return {
+    autoDueDates: row?.autoDueDates ?? true,
+    leadDays: {
+      URGENT: row?.dueLeadUrgent ?? 2,
+      HIGH: row?.dueLeadHigh ?? 7,
+      MEDIUM: row?.dueLeadMedium ?? 14,
+      LOW: row?.dueLeadLow ?? 30,
+    },
+  };
+}
+
+/** A due date computed from a task's priority, or null if disabled. */
+export function dueDateFromPriority(
+  priority: string,
+  defaults: TaskDefaults,
+): Date | null {
+  if (!defaults.autoDueDates) return null;
+  const days =
+    defaults.leadDays[priority as keyof TaskDefaults["leadDays"]] ??
+    defaults.leadDays.MEDIUM;
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
 /**
  * Reads the singleton app config, creating it (with defaults) on first use.
  */

@@ -630,6 +630,13 @@ export const appConfig = pgTable("app_config", {
     .$type<{ from: number; title: string }[]>()
     .notNull()
     .default(sql`'[]'::jsonb`),
+  // Auto due-date defaults: lead time (in days) per priority for newly
+  // created tasks. autoDueDates toggles the whole feature.
+  autoDueDates: boolean().notNull().default(true),
+  dueLeadUrgent: integer().notNull().default(2),
+  dueLeadHigh: integer().notNull().default(7),
+  dueLeadMedium: integer().notNull().default(14),
+  dueLeadLow: integer().notNull().default(30),
 });
 
 /* ────────────────────── relations ─────────────────────── */

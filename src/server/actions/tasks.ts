@@ -25,7 +25,11 @@ import {
   xpForTaskClose,
   type XpConfig,
 } from "@/lib/xp";
-import { getXpConfig } from "@/lib/config";
+import {
+  getXpConfig,
+  getTaskDefaults,
+  dueDateFromPriority,
+} from "@/lib/config";
 import { effectiveUserId } from "@/lib/impersonation";
 
 const TaskStatusEnum = z.enum([
@@ -145,6 +149,9 @@ export async function createTask(input: z.input<typeof CreateInput>) {
     .where(eq(tasks.gameId, parsed.gameId));
   const nextPos = (maxPosRow[0]?.max ?? 0) + 1;
 
+  const defaults = await getTaskDefaults();
+  const dueDate = dueDateFromPriority(parsed.priority, defaults);
+
   const [created] = await db
     .insert(tasks)
     .values({
@@ -153,6 +160,7 @@ export async function createTask(input: z.input<typeof CreateInput>) {
       title: parsed.title,
       priority: parsed.priority,
       estimate: parsed.estimate,
+      dueDate,
       position: nextPos,
       createdById: userId,
     })
@@ -274,11 +282,15 @@ export async function quickAddTask(gameId: string, title: string) {
     .from(tasks)
     .where(eq(tasks.gameId, gameId));
 
+  const defaults = await getTaskDefaults();
+  const dueDate = dueDateFromPriority("MEDIUM", defaults);
+
   const [created] = await db
     .insert(tasks)
     .values({
       gameId,
       title: t,
+      dueDate,
       position: (maxPosRow[0]?.max ?? 0) + 1,
       createdById: userId,
     })
