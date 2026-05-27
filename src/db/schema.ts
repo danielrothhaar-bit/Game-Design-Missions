@@ -515,6 +515,24 @@ export const userBadges = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.badgeCode] })],
 );
 
+/**
+ * Per-user skill proficiency for the RPG-style character sheet.
+ * level is 0–4: 0 None, 1 Beginner, 2 Intermediate, 3 Advanced, 4 Expert.
+ */
+export const userSkills = pgTable(
+  "user_skill",
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    skillId: text()
+      .notNull()
+      .references(() => skills.id, { onDelete: "cascade" }),
+    level: integer().notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.skillId] })],
+);
+
 export const disciplineXp = pgTable(
   "discipline_xp",
   {
@@ -699,3 +717,4 @@ export type Team = typeof teams.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
 export type AppConfig = typeof appConfig.$inferSelect;
 export type GameStatusOption = typeof gameStatusOptions.$inferSelect;
+export type UserSkill = typeof userSkills.$inferSelect;

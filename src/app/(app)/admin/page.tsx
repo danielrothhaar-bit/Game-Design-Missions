@@ -11,6 +11,7 @@ import { PhaseTasksAdmin } from "@/components/admin/phase-tasks-admin";
 import { XpConfigAdmin } from "@/components/admin/xp-config-admin";
 import { BadgesAdmin } from "@/components/admin/badges-admin";
 import { GameStatusesAdmin } from "@/components/admin/game-statuses-admin";
+import { UsersAdmin } from "@/components/admin/users-admin";
 
 export const metadata = { title: "Admin" };
 
@@ -25,15 +26,32 @@ export default async function AdminPage() {
   // Authoritative role check against the DB (not the JWT).
   if (me.role !== "OWNER" && me.role !== "ADMIN") redirect("/my-work");
 
-  const [skills, teams, phaseTemplates, xpConfig, badgeRows, gameStatuses] =
-    await Promise.all([
-      listSkills(true),
-      listTeams(),
-      getPhaseTemplates(),
-      getXpConfig(),
-      db.query.badges.findMany({ orderBy: (b, { asc }) => [asc(b.name)] }),
-      listGameStatuses(),
-    ]);
+  const [
+    skills,
+    teams,
+    phaseTemplates,
+    xpConfig,
+    badgeRows,
+    gameStatuses,
+    userRows,
+    userSkillRows,
+  ] = await Promise.all([
+    listSkills(true),
+    listTeams(),
+    getPhaseTemplates(),
+    getXpConfig(),
+    db.query.badges.findMany({ orderBy: (b, { asc }) => [asc(b.name)] }),
+    listGameStatuses(),
+    db.query.users.findMany({ orderBy: (u, { asc }) => [asc(u.name)] }),
+    db.query.userSkills.findMany(),
+  ]);
+
+  const skillsByUser = new Map<string, Record<string, number>>();
+  for (const us of userSkillRows) {
+    const m = skillsByUser.get(us.userId) ?? {};
+    m[us.skillId] = us.level;
+    skillsByUser.set(us.userId, m);
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -49,6 +67,7 @@ export default async function AdminPage() {
           <TabsTrigger value="xp">XP &amp; Levels</TabsTrigger>
           <TabsTrigger value="badges">Badges</TabsTrigger>
           <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="statuses">Game Statuses</TabsTrigger>
           <TabsTrigger value="phases">Phase Tasks</TabsTrigger>
         </TabsList>
@@ -103,6 +122,30 @@ export default async function AdminPage() {
                   name: s.name,
                   color: s.color,
                   archived: s.archived,
+                }))}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Team members</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UsersAdmin
+                skills={skills.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  color: s.color,
+                }))}
+                initialUsers={userRows.map((u) => ({
+                  id: u.id,
+                  name: u.name,
+                  email: u.email,
+                  role: u.role,
+                  skills: skillsByUser.get(u.id) ?? {},
                 }))}
               />
             </CardContent>

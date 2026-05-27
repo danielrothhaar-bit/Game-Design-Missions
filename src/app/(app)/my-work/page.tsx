@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { auth } from "@/lib/auth";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
+import { listSkills } from "@/lib/queries";
 import {
   taskPriorityColor,
   taskStatusColor,
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Flame, Trophy } from "lucide-react";
+import { SkillRadar } from "@/components/skill-radar";
 
 export const metadata = { title: "My Work" };
 
@@ -22,22 +24,35 @@ export default async function MyWorkPage() {
 
   const userId = session.user.id;
 
-  const [me, assignments, streak, badges] = await Promise.all([
-    db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
-    db.query.taskAssignees.findMany({
-      where: (a, { eq }) => eq(a.userId, userId),
-      with: {
-        task: { with: { game: true, phase: true } },
-      },
-    }),
-    db.query.streaks.findFirst({ where: (s, { eq }) => eq(s.userId, userId) }),
-    db.query.userBadges.findMany({
-      where: (b, { eq }) => eq(b.userId, userId),
-      with: { badge: true },
-    }),
-  ]);
+  const [me, assignments, streak, badges, proficiencyRows, allSkills] =
+    await Promise.all([
+      db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
+      db.query.taskAssignees.findMany({
+        where: (a, { eq }) => eq(a.userId, userId),
+        with: {
+          task: { with: { game: true, phase: true } },
+        },
+      }),
+      db.query.streaks.findFirst({ where: (s, { eq }) => eq(s.userId, userId) }),
+      db.query.userBadges.findMany({
+        where: (b, { eq }) => eq(b.userId, userId),
+        with: { badge: true },
+      }),
+      db.query.userSkills.findMany({
+        where: (us, { eq }) => eq(us.userId, userId),
+      }),
+      listSkills(),
+    ]);
 
   if (!me) redirect("/login");
+
+  const skillNameById = new Map(allSkills.map((s) => [s.id, s.name]));
+  const proficiency = proficiencyRows
+    .filter((r) => r.level > 0)
+    .map((r) => ({
+      skill: skillNameById.get(r.skillId) ?? "?",
+      level: r.level,
+    }));
   const cfg = await getXpConfig();
   const p = progressInLevel(me.totalXp, cfg);
 
@@ -140,6 +155,17 @@ export default async function MyWorkPage() {
           ) : null}
         </CardContent>
       </Card>
+
+      {proficiency.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Skill proficiency</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SkillRadar data={proficiency} height={240} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

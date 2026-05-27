@@ -7,11 +7,13 @@ import {
   xpForLevel,
 } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
+import { listSkills } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { initials, disciplineLabel } from "@/lib/format";
 import { Flame, Trophy } from "lucide-react";
+import { SkillRadar } from "@/components/skill-radar";
 
 export const metadata = { title: "Profile" };
 
@@ -20,8 +22,16 @@ export default async function ProfilePage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const [me, streak, userBadges, disciplineXp, recentXp, assignments] =
-    await Promise.all([
+  const [
+    me,
+    streak,
+    userBadges,
+    disciplineXp,
+    recentXp,
+    assignments,
+    proficiencyRows,
+    allSkills,
+  ] = await Promise.all([
       db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
       db.query.streaks.findFirst({ where: (s, { eq }) => eq(s.userId, userId) }),
       db.query.userBadges.findMany({
@@ -40,8 +50,20 @@ export default async function ProfilePage() {
         where: (a, { eq }) => eq(a.userId, userId),
         with: { task: { with: { skills: { with: { skill: true } } } } },
       }),
+      db.query.userSkills.findMany({
+        where: (us, { eq }) => eq(us.userId, userId),
+      }),
+      listSkills(),
     ]);
   if (!me) redirect("/login");
+
+  const skillNameById = new Map(allSkills.map((s) => [s.id, s.name]));
+  const proficiency = proficiencyRows
+    .filter((r) => r.level > 0)
+    .map((r) => ({
+      skill: skillNameById.get(r.skillId) ?? "?",
+      level: r.level,
+    }));
 
   const cfg = await getXpConfig();
   const p = progressInLevel(me.totalXp, cfg);
@@ -188,6 +210,15 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Skill proficiency</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SkillRadar data={proficiency} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
