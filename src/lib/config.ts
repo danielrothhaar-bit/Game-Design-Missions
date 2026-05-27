@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { appConfig } from "@/db/schema";
+import { addBusinessDays } from "./dates";
 import { DEFAULT_TITLES, DEFAULT_XP_CONFIG, type XpConfig } from "./xp";
 
 type ConfigRow = typeof appConfig.$inferSelect;
@@ -40,7 +41,10 @@ export async function getTaskDefaults(): Promise<TaskDefaults> {
   };
 }
 
-/** A due date computed from a task's priority, or null if disabled. */
+/**
+ * A due date computed from a task's priority, or null if disabled. Lead times
+ * count business days, so the date never lands on a weekend.
+ */
 export function dueDateFromPriority(
   priority: string,
   defaults: TaskDefaults,
@@ -51,8 +55,7 @@ export function dueDateFromPriority(
     defaults.leadDays.MEDIUM;
   const d = new Date();
   d.setHours(12, 0, 0, 0);
-  d.setDate(d.getDate() + days);
-  return d;
+  return addBusinessDays(d, days);
 }
 
 /**

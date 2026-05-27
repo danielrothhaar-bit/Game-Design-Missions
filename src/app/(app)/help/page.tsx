@@ -144,9 +144,11 @@ export default function HelpPage() {
         <CardContent className="space-y-3 p-6">
           <h2 className="text-base font-semibold">Streaks &amp; badges</h2>
           <p className="text-sm text-muted-foreground">
-            Close a task on consecutive days to build a{" "}
-            <strong className="text-foreground">streak</strong> 🔥 — miss a day
-            and it resets. <strong className="text-foreground">Badges</strong>{" "}
+            Close a task on consecutive working days to build a{" "}
+            <strong className="text-foreground">streak</strong> 🔥 — weekends are
+            off, so closing on Friday and the next Monday keeps it going; skip a
+            working day and it resets.{" "}
+            <strong className="text-foreground">Badges</strong>{" "}
             are one-time achievements that pop automatically at milestones (your
             first task, hitting due dates, a 7-day streak, and more) and show on
             your profile.

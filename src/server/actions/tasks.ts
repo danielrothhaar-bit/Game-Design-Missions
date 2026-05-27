@@ -31,6 +31,7 @@ import {
   dueDateFromPriority,
 } from "@/lib/config";
 import { effectiveUserId } from "@/lib/impersonation";
+import { businessDaysBetween } from "@/lib/dates";
 
 const TaskStatusEnum = z.enum([
   "TODO",
@@ -512,11 +513,11 @@ async function bumpStreak(userId: string) {
   if (existing.lastActivityDate) {
     const last = new Date(existing.lastActivityDate);
     last.setHours(0, 0, 0, 0);
-    const diffDays = Math.round(
-      (today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24),
-    );
-    if (diffDays === 0) return;
-    const newCurrent = diffDays === 1 ? existing.current + 1 : 1;
+    // Count working days only: a Friday→Monday gap is 1, so weekends off
+    // never break a streak.
+    const gap = businessDaysBetween(last, today);
+    if (gap === 0) return;
+    const newCurrent = gap === 1 ? existing.current + 1 : 1;
     await db
       .update(streaks)
       .set({
