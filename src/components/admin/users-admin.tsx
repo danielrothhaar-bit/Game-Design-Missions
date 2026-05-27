@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronRight, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, Eye, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { startImpersonation } from "@/server/actions/impersonation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -37,10 +39,23 @@ export function UsersAdmin({
   initialUsers: User[];
   skills: SkillOpt[];
 }) {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("DESIGNER");
   const [, start] = useTransition();
+
+  function viewAs(id: string) {
+    start(async () => {
+      try {
+        await startImpersonation(id);
+        router.push("/my-work");
+        router.refresh();
+      } catch {
+        toast.error("Could not start viewing as this user");
+      }
+    });
+  }
 
   function add() {
     const e = email.trim().toLowerCase();
@@ -155,6 +170,7 @@ export function UsersAdmin({
             onChangeName={(n) => changeName(u.id, n)}
             onChangeRole={(r) => changeRole(u.id, r)}
             onSetSkill={(skillId, level) => setSkill(u.id, skillId, level)}
+            onViewAs={() => viewAs(u.id)}
           />
         ))}
       </ul>
@@ -168,12 +184,14 @@ function UserRow({
   onChangeName,
   onChangeRole,
   onSetSkill,
+  onViewAs,
 }: {
   user: User;
   skills: SkillOpt[];
   onChangeName: (name: string) => void;
   onChangeRole: (r: Role) => void;
   onSetSkill: (skillId: string, level: number) => void;
+  onViewAs: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const setCount = Object.values(user.skills).filter((l) => l > 0).length;
@@ -222,6 +240,15 @@ function UserRow({
           />
           Skills
           <span className="text-muted-foreground">({setCount})</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 text-muted-foreground"
+          title="View the app as this user"
+          onClick={onViewAs}
+        >
+          <Eye className="size-4" />
         </Button>
       </div>
       {open ? (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { auth } from "@/lib/auth";
+import { effectiveUserId } from "@/lib/impersonation";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
 import { listSkills } from "@/lib/queries";
@@ -19,10 +19,8 @@ import { SkillRadar } from "@/components/skill-radar";
 export const metadata = { title: "My Work" };
 
 export default async function MyWorkPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
-  const userId = session.user.id;
+  const userId = await effectiveUserId();
+  if (!userId) redirect("/login");
 
   const [me, assignments, streak, badges, proficiencyRows, allSkills] =
     await Promise.all([

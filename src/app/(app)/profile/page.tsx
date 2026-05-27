@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { auth } from "@/lib/auth";
+import { effectiveUserId } from "@/lib/impersonation";
 import {
   progressInLevel,
   titleForLevel,
@@ -18,9 +18,8 @@ import { SkillRadar } from "@/components/skill-radar";
 export const metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-  const userId = session.user.id;
+  const userId = await effectiveUserId();
+  if (!userId) redirect("/login");
 
   const [
     me,

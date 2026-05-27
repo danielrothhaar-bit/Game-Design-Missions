@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import {
   listGames,
-  getUser,
   listGameStatuses,
   listSidequests,
 } from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
+import { resolveUsers } from "@/lib/impersonation";
 
 export const dynamic = "force-dynamic";
 
@@ -17,20 +17,22 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { effective: user, impersonating } = await resolveUsers();
+  if (!user) redirect("/login");
 
-  const [games, user, xpConfig, statuses, sidequests] = await Promise.all([
+  const [games, xpConfig, statuses, sidequests] = await Promise.all([
     listGames(),
-    getUser(session.user.id),
     getXpConfig(),
     listGameStatuses(),
     listSidequests(),
   ]);
-  if (!user) redirect("/login");
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-screen w-full flex-col overflow-hidden">
+      {impersonating ? (
+        <ImpersonationBanner name={user.name ?? user.email} />
+      ) : null}
+      <div className="flex min-h-0 flex-1 w-full overflow-hidden">
       <Sidebar
         statuses={statuses.map((s) => ({ slug: s.slug, label: s.label }))}
         games={games.map((g) => ({
@@ -67,6 +69,7 @@ export default async function AppLayout({
           }}
         />
         <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
       </div>
     </div>
   );
