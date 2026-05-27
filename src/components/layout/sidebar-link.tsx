@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Briefcase, LayoutGrid, Shield, Star } from "lucide-react";
+import {
+  BarChart3,
+  Briefcase,
+  LayoutGrid,
+  Shield,
+  Star,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Icons live here (a Client Component) keyed by string. Server Components
@@ -13,6 +20,7 @@ const ICONS = {
   dashboard: BarChart3,
   grid: LayoutGrid,
   shield: Shield,
+  users: Users,
 } as const;
 
 export type SidebarIcon = keyof typeof ICONS;

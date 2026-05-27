@@ -73,6 +73,7 @@ export function Sidebar({
           <SidebarLink href="/my-work" icon="briefcase" label="My Work" exact />
           <SidebarLink href="/dashboard" icon="dashboard" label="Dashboard" />
           <SidebarLink href="/games" icon="grid" label="All Games" exact />
+          <SidebarLink href="/team" icon="users" label="Team" exact />
         </div>
 
         {divisions.map((div) => (
