@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   getGameBySlug,
@@ -11,6 +10,7 @@ import {
   GameLeadPicker,
   GameStatusPicker,
 } from "@/components/games/game-header-controls";
+import { GameTabs } from "@/components/games/game-tabs";
 
 export default async function GameLayout({
   children,
@@ -68,45 +68,9 @@ export default async function GameLayout({
             }))}
           />
         </div>
-        <nav className="flex items-center gap-1 text-sm">
-          <TabLink href={`/games/${slug}`} label="List" exact />
-          <TabLink href={`/games/${slug}/board`} label="Board" disabled />
-          <TabLink href={`/games/${slug}/timeline`} label="Timeline" disabled />
-        </nav>
+        <GameTabs slug={slug} />
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
     </div>
-  );
-}
-
-function TabLink({
-  href,
-  label,
-  exact,
-  disabled,
-}: {
-  href: string;
-  label: string;
-  exact?: boolean;
-  disabled?: boolean;
-}) {
-  if (disabled) {
-    return (
-      <span className="cursor-not-allowed rounded-md px-3 py-1.5 text-muted-foreground/60">
-        {label}
-        <span className="ml-1.5 text-[10px] uppercase tracking-wider">
-          soon
-        </span>
-      </span>
-    );
-  }
-  return (
-    <Link
-      href={href}
-      className="rounded-md px-3 py-1.5 text-foreground hover:bg-accent"
-      aria-current={exact ? "page" : undefined}
-    >
-      {label}
-    </Link>
   );
 }
