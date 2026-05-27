@@ -111,7 +111,16 @@ export default async function MyWorkPage() {
                     color: badge.color,
                   }}
                 >
-                  <Trophy className="size-3" />
+                  {badge.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- data URL
+                    <img
+                      src={badge.imageUrl}
+                      alt=""
+                      className="size-3.5 rounded-sm object-cover"
+                    />
+                  ) : (
+                    <Trophy className="size-3" />
+                  )}
                   {badge.name}
                 </Badge>
               ))}

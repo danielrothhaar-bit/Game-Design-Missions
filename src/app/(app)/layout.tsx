@@ -30,6 +30,7 @@ export default async function AppLayout({
           name: g.name,
           coverColor: g.coverColor,
           status: g.status,
+          isLead: g.leadUserId === user.id,
         }))}
         user={{
           name: user.name,

@@ -78,6 +78,7 @@ export default async function AdminPage() {
                     name: b.name,
                     description: b.description,
                     color: b.color,
+                    imageUrl: b.imageUrl ?? null,
                     threshold: criteria.threshold ?? null,
                     criteriaType: criteria.type ?? "—",
                   };

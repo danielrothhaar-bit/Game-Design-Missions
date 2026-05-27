@@ -16,6 +16,7 @@ type Game = {
   name: string;
   coverColor: string;
   status: string;
+  isLead: boolean;
 };
 
 export function Sidebar({
@@ -165,14 +166,17 @@ function GameGroup({
       </button>
       {open ? (
         <div className="space-y-0.5 pb-1 pl-1.5">
-          {games.map((g) => (
-            <SidebarGameLink
-              key={g.slug}
-              slug={g.slug}
-              name={g.name}
-              color={g.coverColor}
-            />
-          ))}
+          {[...games]
+            .sort((a, b) => Number(b.isLead) - Number(a.isLead))
+            .map((g) => (
+              <SidebarGameLink
+                key={g.slug}
+                slug={g.slug}
+                name={g.name}
+                color={g.coverColor}
+                isLead={g.isLead}
+              />
+            ))}
         </div>
       ) : null}
     </div>

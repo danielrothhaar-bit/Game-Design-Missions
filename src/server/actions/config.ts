@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { appConfig, badges } from "@/db/schema";
 import { requireAdmin } from "@/lib/authz";
+import { slugify } from "@/lib/format";
 
 const XpConfigInput = z.object({
   xpPerPoint: z.number().int().min(1).max(1000),
@@ -37,6 +38,7 @@ const BadgeInput = z.object({
   name: z.string().min(1).max(80).optional(),
   description: z.string().min(1).max(280).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  imageUrl: z.union([z.string().max(500000), z.null()]).optional(),
   threshold: z.number().int().min(1).max(100000).optional(),
 });
 
@@ -58,6 +60,53 @@ export async function updateBadge(input: z.input<typeof BadgeInput>) {
     .update(badges)
     .set({ ...rest, criteria })
     .where(eq(badges.code, code));
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+const CRITERIA_TYPES = [
+  "TASK_CLOSED_COUNT",
+  "ON_TIME_CLOSES",
+  "DISCIPLINE_CLOSES",
+  "STREAK",
+] as const;
+
+const CreateBadgeInput = z.object({
+  name: z.string().min(1).max(80),
+  description: z.string().min(1).max(280),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#7c3aed"),
+  criteriaType: z.enum(CRITERIA_TYPES),
+  threshold: z.number().int().min(1).max(100000).default(1),
+  discipline: z.string().optional(),
+});
+
+export async function createBadge(input: z.input<typeof CreateBadgeInput>) {
+  await requireAdmin();
+  const parsed = CreateBadgeInput.parse(input);
+  const code = slugify(parsed.name);
+  if (!code) throw new Error("Invalid badge name");
+
+  const existing = await db.query.badges.findFirst({
+    where: eq(badges.code, code),
+  });
+  if (existing) throw new Error("A badge with that name already exists.");
+
+  const criteria: Record<string, unknown> = {
+    type: parsed.criteriaType,
+    threshold: parsed.threshold,
+  };
+  if (parsed.criteriaType === "DISCIPLINE_CLOSES" && parsed.discipline) {
+    criteria.discipline = parsed.discipline;
+  }
+
+  await db.insert(badges).values({
+    code,
+    name: parsed.name,
+    description: parsed.description,
+    icon: "Award",
+    color: parsed.color,
+    criteria,
+  });
   revalidatePath("/admin");
   return { ok: true };
 }

@@ -121,15 +121,24 @@ export default async function ProfilePage() {
               <ul className="space-y-3">
                 {userBadges.map(({ badge, awardedAt }) => (
                   <li key={badge.code} className="flex items-start gap-3">
-                    <span
-                      className="mt-0.5 grid size-8 place-items-center rounded-md border"
-                      style={{
-                        borderColor: badge.color,
-                        color: badge.color,
-                      }}
-                    >
-                      <Trophy className="size-4" />
-                    </span>
+                    {badge.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- data URL
+                      <img
+                        src={badge.imageUrl}
+                        alt={badge.name}
+                        className="mt-0.5 size-8 rounded-md object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="mt-0.5 grid size-8 place-items-center rounded-md border"
+                        style={{
+                          borderColor: badge.color,
+                          color: badge.color,
+                        }}
+                      >
+                        <Trophy className="size-4" />
+                      </span>
+                    )}
                     <div className="min-w-0">
                       <p className="font-medium leading-tight">{badge.name}</p>
                       <p className="text-xs text-muted-foreground">

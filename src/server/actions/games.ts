@@ -24,6 +24,7 @@ const UpdateInput = z.object({
   launchDate: z.union([z.date(), z.null()]).optional(),
   name: z.string().min(1).max(120).optional(),
   description: z.union([z.string(), z.null()]).optional(),
+  leadUserId: z.union([z.string(), z.null()]).optional(),
 });
 
 async function requireUser() {
@@ -54,6 +55,7 @@ export async function updateGame(input: z.input<typeof UpdateInput>) {
   revalidatePath(`/games/${existing.slug}`);
   revalidatePath("/games");
   revalidatePath("/dashboard");
+  revalidatePath("/", "layout"); // refresh sidebar (lead highlight, etc.)
   return { ok: true };
 }
 

@@ -241,6 +241,7 @@ export const games = pgTable(
     coverColor: varchar({ length: 16 }).notNull().default("#7c3aed"),
     coverImage: text(),
     launchDate: timestamp({ mode: "date", withTimezone: true }),
+    leadUserId: text().references(() => users.id, { onDelete: "set null" }),
     createdById: text().references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp({ mode: "date", withTimezone: true })
       .notNull()
@@ -484,6 +485,7 @@ export const badges = pgTable("badge", {
   description: text().notNull(),
   icon: varchar({ length: 40 }).notNull(),
   color: varchar({ length: 16 }).notNull().default("#7c3aed"),
+  imageUrl: text(),
   criteria: jsonb().$type<Record<string, unknown>>().notNull(),
 });
 

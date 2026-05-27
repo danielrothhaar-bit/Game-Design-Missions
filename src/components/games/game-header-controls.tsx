@@ -22,8 +22,40 @@ import {
   gameStatusLabel,
 } from "@/lib/format";
 import { updateGame } from "@/server/actions/games";
+import { AssigneeSelect, type AssigneeUser } from "./assignee-select";
 
 type Status = (typeof GAME_STATUSES)[number];
+
+export function GameLeadPicker({
+  gameId,
+  users,
+  initialLeadId,
+}: {
+  gameId: string;
+  users: AssigneeUser[];
+  initialLeadId: string | null;
+}) {
+  const [leadId, setLeadId] = useState<string | null>(initialLeadId);
+
+  async function change(next: string | null) {
+    const before = leadId;
+    setLeadId(next);
+    try {
+      await updateGame({ id: gameId, leadUserId: next });
+      toast.success(next ? "Lead updated" : "Lead cleared");
+    } catch {
+      setLeadId(before);
+      toast.error("Could not set lead");
+    }
+  }
+
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="text-xs text-muted-foreground">Lead:</span>
+      <AssigneeSelect users={users} assignedId={leadId} onChange={change} />
+    </span>
+  );
+}
 
 export function GameStatusPicker({
   gameId,

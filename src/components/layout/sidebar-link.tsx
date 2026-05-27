@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Briefcase, LayoutGrid, Shield } from "lucide-react";
+import { BarChart3, Briefcase, LayoutGrid, Shield, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Icons live here (a Client Component) keyed by string. Server Components
@@ -51,10 +51,12 @@ export function SidebarGameLink({
   slug,
   name,
   color,
+  isLead = false,
 }: {
   slug: string;
   name: string;
   color: string;
+  isLead?: boolean;
 }) {
   const pathname = usePathname();
   const href = `/games/${slug}`;
@@ -62,11 +64,13 @@ export function SidebarGameLink({
   return (
     <Link
       href={href}
+      title={isLead ? "You lead this game" : undefined}
       className={cn(
         "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
         active
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+        isLead && !active && "bg-amber-400/10 text-foreground",
       )}
     >
       <span
@@ -75,6 +79,9 @@ export function SidebarGameLink({
         aria-hidden
       />
       <span className="truncate">{name}</span>
+      {isLead ? (
+        <Star className="ml-auto size-3 shrink-0 fill-amber-400 text-amber-400" />
+      ) : null}
     </Link>
   );
 }

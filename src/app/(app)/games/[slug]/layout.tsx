@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGameBySlug } from "@/lib/queries";
+import { getGameBySlug, listUsers } from "@/lib/queries";
 import { GAME_STATUSES } from "@/lib/format";
 import {
   GameLaunchDatePicker,
+  GameLeadPicker,
   GameStatusPicker,
 } from "@/components/games/game-header-controls";
 
@@ -15,7 +16,7 @@ export default async function GameLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const game = await getGameBySlug(slug);
+  const [game, users] = await Promise.all([getGameBySlug(slug), listUsers()]);
   if (!game) notFound();
 
   return (
@@ -38,6 +39,16 @@ export default async function GameLayout({
           <GameLaunchDatePicker
             gameId={game.id}
             initial={game.launchDate ?? null}
+          />
+          <GameLeadPicker
+            gameId={game.id}
+            initialLeadId={game.leadUserId ?? null}
+            users={users.map((u) => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              image: u.image,
+            }))}
           />
         </div>
         <nav className="flex items-center gap-1 text-sm">
