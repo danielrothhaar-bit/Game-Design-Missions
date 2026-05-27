@@ -13,7 +13,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 
 export type TeamOption = { id: string; name: string; color: string };
 export type SkillOption = { id: string; name: string; color: string };
@@ -28,6 +27,22 @@ export type SkillLevel = (typeof SKILL_LEVELS)[number];
 
 export const skillLevelLabel = (l: string) =>
   l.charAt(0) + l.slice(1).toLowerCase();
+
+const SKILL_LEVEL_ABBR: Record<string, string> = {
+  BEGINNER: "Beg",
+  INTERMEDIATE: "Int",
+  ADVANCED: "Adv",
+  EXPERT: "Exp",
+};
+export const skillLevelAbbr = (l: string) => SKILL_LEVEL_ABBR[l] ?? l;
+
+// Difficulty → color: green / yellow / red / purple.
+export const SKILL_LEVEL_COLOR: Record<string, string> = {
+  BEGINNER: "#22c55e",
+  INTERMEDIATE: "#eab308",
+  ADVANCED: "#ef4444",
+  EXPERT: "#a855f7",
+};
 
 export function TeamSelect({
   teams,
@@ -124,12 +139,20 @@ export function SkillSelect({
               return (
                 <span
                   key={s.id}
-                  className="inline-flex max-w-[88px] items-center gap-1 rounded px-1 py-0.5 text-[10px]"
+                  className="inline-flex max-w-[130px] items-center gap-1 rounded py-0.5 pl-1.5 pr-0.5 text-[10px]"
                   style={{ backgroundColor: `${s.color}22`, color: s.color }}
                 >
                   <span className="truncate">{s.name}</span>
                   {lvl ? (
-                    <span className="opacity-70">{skillLevelLabel(lvl)[0]}</span>
+                    <span
+                      className="rounded px-1 text-[9px] font-bold"
+                      style={{
+                        backgroundColor: SKILL_LEVEL_COLOR[lvl],
+                        color: "#0a0a0a",
+                      }}
+                    >
+                      {skillLevelAbbr(lvl)}
+                    </span>
                   ) : null}
                 </span>
               );
@@ -142,7 +165,10 @@ export function SkillSelect({
           </span>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-96 w-64 overflow-y-auto p-1">
+      <PopoverContent
+        align="start"
+        className="max-h-[28rem] w-96 max-w-[calc(100vw-2rem)] overflow-y-auto p-1"
+      >
         {skills.length === 0 ? (
           <p className="px-2 py-3 text-xs text-muted-foreground">
             No skills defined. Add them in Admin → Skills.
@@ -155,33 +181,36 @@ export function SkillSelect({
                 <button
                   type="button"
                   onClick={() => toggle(s.id)}
-                  className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent"
+                  className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-accent"
                 >
                   <span
                     className="size-2.5 rounded-full"
                     style={{ backgroundColor: s.color }}
                   />
                   <span className="truncate">{s.name}</span>
-                  {sel ? <Check className="ml-auto size-3" /> : null}
+                  {sel ? <Check className="ml-auto size-3.5" /> : null}
                 </button>
                 {sel ? (
-                  <div className="mt-1 flex gap-1 pl-5">
-                    {SKILL_LEVELS.map((l) => (
-                      <button
-                        key={l}
-                        type="button"
-                        onClick={() => setLevel(s.id, l)}
-                        className={cn(
-                          "rounded px-1.5 py-0.5 text-[10px] transition-colors",
-                          sel === l
-                            ? "bg-foreground/15 text-foreground"
-                            : "text-muted-foreground hover:bg-accent",
-                        )}
-                        title={skillLevelLabel(l)}
-                      >
-                        {skillLevelLabel(l)}
-                      </button>
-                    ))}
+                  <div className="mt-1 flex flex-wrap gap-1.5 pl-5">
+                    {SKILL_LEVELS.map((l) => {
+                      const active = sel === l;
+                      const color = SKILL_LEVEL_COLOR[l];
+                      return (
+                        <button
+                          key={l}
+                          type="button"
+                          onClick={() => setLevel(s.id, l)}
+                          className="rounded px-2 py-0.5 text-xs font-medium transition-colors"
+                          style={
+                            active
+                              ? { backgroundColor: color, color: "#0a0a0a" }
+                              : { color, border: `1px solid ${color}55` }
+                          }
+                        >
+                          {skillLevelLabel(l)}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : null}
               </div>

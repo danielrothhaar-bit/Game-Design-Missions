@@ -4,7 +4,11 @@ import { db } from "@/db";
 import { auth } from "@/lib/auth";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
-import { taskStatusColor, taskStatusLabel } from "@/lib/format";
+import {
+  taskPriorityColor,
+  taskStatusColor,
+  taskStatusLabel,
+} from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -37,10 +41,18 @@ export default async function MyWorkPage() {
   const cfg = await getXpConfig();
   const p = progressInLevel(me.totalXp, cfg);
 
+  const PRIORITY_RANK: Record<string, number> = {
+    URGENT: 0,
+    HIGH: 1,
+    MEDIUM: 2,
+    LOW: 3,
+  };
   const tasks = assignments
     .map((a) => a.task)
     .filter((t) => t.status !== "DONE")
     .sort((a, b) => {
+      const pr = (PRIORITY_RANK[a.priority] ?? 9) - (PRIORITY_RANK[b.priority] ?? 9);
+      if (pr !== 0) return pr;
       const ad = a.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
       const bd = b.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
       return ad - bd;
@@ -150,6 +162,11 @@ export default async function MyWorkPage() {
                       className={`rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${taskStatusColor(t.status)}`}
                     >
                       {taskStatusLabel(t.status)}
+                    </span>
+                    <span
+                      className={`w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
+                    >
+                      {t.priority.toLowerCase()}
                     </span>
                     <span className="flex-1 truncate">{t.title}</span>
                     <span className="text-xs text-muted-foreground">
