@@ -13,6 +13,8 @@ import {
   xpForLevel,
 } from "@/lib/xp";
 import { STARTER_BADGES } from "@/lib/badges";
+import { listSkills } from "@/lib/queries";
+import { SkillsAdmin } from "@/components/admin/skills-admin";
 
 export const metadata = { title: "Admin" };
 
@@ -27,6 +29,8 @@ export default async function AdminPage() {
     where: (u, { eq }) => eq(u.id, session.user.id),
   });
   if (!me) redirect("/login");
+
+  const skills = await listSkills(true);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -109,13 +113,18 @@ export default async function AdminPage() {
 
         <TabsContent value="skills" className="mt-4">
           <Card>
-            <CardContent className="grid place-items-center gap-2 py-12 text-center">
-              <p className="text-sm font-medium">Skills bank</p>
-              <p className="max-w-sm text-xs text-muted-foreground">
-                Manage the skill catalog (3D printing, documentation, puzzle
-                design, …) and experience levels here. Coming in the next
-                update, alongside skill tagging on tasks.
-              </p>
+            <CardHeader>
+              <CardTitle className="text-base">Skills bank</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SkillsAdmin
+                initialSkills={skills.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  color: s.color,
+                  archived: s.archived,
+                }))}
+              />
             </CardContent>
           </Card>
         </TabsContent>

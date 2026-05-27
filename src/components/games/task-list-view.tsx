@@ -10,6 +10,8 @@ import {
   createTask,
   deleteTask,
   setTaskAssignee,
+  setTaskSkill,
+  setTaskTeam,
   updateTaskFields,
 } from "@/server/actions/tasks";
 import { InlineEditNumber, InlineEditText } from "./inline-edit-text";
@@ -21,6 +23,13 @@ import {
 } from "./status-select";
 import { AssigneeSelect, type AssigneeUser } from "./assignee-select";
 import { DueDatePopover } from "./due-date-popover";
+import {
+  SkillSelect,
+  TeamSelect,
+  type SkillLevel,
+  type SkillOption,
+  type TeamOption,
+} from "./task-meta-selects";
 
 type Task = {
   id: string;
@@ -32,6 +41,9 @@ type Task = {
   dueDate: Date | null;
   phaseId: string | null;
   position: number;
+  teamId: string | null;
+  skillId: string | null;
+  skillLevel: SkillLevel | null;
   assignees: { isPrimary: boolean; user: AssigneeUser }[];
   labels: { label: { id: string; name: string; color: string } }[];
 };
@@ -51,11 +63,15 @@ export function TaskListView({
   phases,
   initialTasks,
   users,
+  teams,
+  skills,
 }: {
   game: { id: string; slug: string; name: string };
   phases: Phase[];
   initialTasks: Task[];
   users: AssigneeUser[];
+  teams: TeamOption[];
+  skills: SkillOption[];
 }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [statusFilter, setStatusFilter] = useState<Set<Status>>(
@@ -164,6 +180,36 @@ export function TaskListView({
     }
   }
 
+  async function changeTeam(id: string, teamId: string | null) {
+    const before = tasks.find((t) => t.id === id);
+    mutateLocal(id, { teamId });
+    try {
+      await setTaskTeam(id, teamId);
+    } catch {
+      if (before) mutateLocal(id, { teamId: before.teamId });
+      toast.error("Could not change team");
+    }
+  }
+
+  async function changeSkill(
+    id: string,
+    skillId: string | null,
+    level: SkillLevel | null,
+  ) {
+    const before = tasks.find((t) => t.id === id);
+    mutateLocal(id, { skillId, skillLevel: skillId ? level : null });
+    try {
+      await setTaskSkill(id, skillId, skillId ? level : null);
+    } catch {
+      if (before)
+        mutateLocal(id, {
+          skillId: before.skillId,
+          skillLevel: before.skillLevel,
+        });
+      toast.error("Could not change skill");
+    }
+  }
+
   async function remove(id: string) {
     const before = tasks;
     setTasks((prev) => prev.filter((t) => t.id !== id));
@@ -192,6 +238,9 @@ export function TaskListView({
             dueDate: created.dueDate,
             phaseId: created.phaseId,
             position: created.position,
+            teamId: created.teamId,
+            skillId: created.skillId,
+            skillLevel: (created.skillLevel as SkillLevel | null) ?? null,
             assignees: [],
             labels: [],
           },
@@ -273,8 +322,12 @@ export function TaskListView({
                 phase={phase}
                 tasks={phaseTasks}
                 users={users}
+                teams={teams}
+                skills={skills}
                 onChangeStatus={changeStatus}
                 onChangeAssignee={changeAssignee}
+                onChangeTeam={changeTeam}
+                onChangeSkill={changeSkill}
                 onCommitField={commitField}
                 onCreate={(title) => addTask(phase.id, title)}
                 onDelete={remove}
@@ -291,8 +344,12 @@ function PhaseGroup({
   phase,
   tasks,
   users,
+  teams,
+  skills,
   onChangeStatus,
   onChangeAssignee,
+  onChangeTeam,
+  onChangeSkill,
   onCommitField,
   onCreate,
   onDelete,
@@ -300,8 +357,16 @@ function PhaseGroup({
   phase: Phase;
   tasks: Task[];
   users: AssigneeUser[];
+  teams: TeamOption[];
+  skills: SkillOption[];
   onChangeStatus: (id: string, next: Status) => void;
   onChangeAssignee: (id: string, userId: string | null) => void;
+  onChangeTeam: (id: string, teamId: string | null) => void;
+  onChangeSkill: (
+    id: string,
+    skillId: string | null,
+    level: SkillLevel | null,
+  ) => void;
   onCommitField: <K extends keyof Task>(id: string, key: K, value: Task[K]) => void;
   onCreate: (title: string) => void;
   onDelete: (id: string) => void;
@@ -326,19 +391,38 @@ function PhaseGroup({
             No tasks in this phase yet.
           </p>
         ) : (
-          <ul className="divide-y divide-border">
-            {tasks.map((t) => (
+          <>
+            <div
+              className={`${ROW_GRID} border-b border-border bg-muted/30 px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground`}
+            >
+              <span>Status</span>
+              <span>Item</span>
+              <span>Responsible Team</span>
+              <span>Skill</span>
+              <span>Priority</span>
+              <span>Assignee</span>
+              <span>Due</span>
+              <span className="text-center">Est</span>
+              <span />
+            </div>
+            <ul className="divide-y divide-border">
+              {tasks.map((t) => (
               <TaskRow
                 key={t.id}
                 task={t}
                 users={users}
+                teams={teams}
+                skills={skills}
                 onChangeStatus={onChangeStatus}
                 onChangeAssignee={onChangeAssignee}
+                onChangeTeam={onChangeTeam}
+                onChangeSkill={onChangeSkill}
                 onCommitField={onCommitField}
                 onDelete={onDelete}
               />
-            ))}
-          </ul>
+              ))}
+            </ul>
+          </>
         )}
         <div className="border-t border-border/60">
           {adding ? (
@@ -380,25 +464,40 @@ function PhaseGroup({
   );
 }
 
+const ROW_GRID =
+  "grid grid-cols-[104px_minmax(180px,1fr)_140px_150px_92px_120px_104px_44px_28px] items-center gap-2.5";
+
 function TaskRow({
   task,
   users,
+  teams,
+  skills,
   onChangeStatus,
   onChangeAssignee,
+  onChangeTeam,
+  onChangeSkill,
   onCommitField,
   onDelete,
 }: {
   task: Task;
   users: AssigneeUser[];
+  teams: TeamOption[];
+  skills: SkillOption[];
   onChangeStatus: (id: string, next: Status) => void;
   onChangeAssignee: (id: string, userId: string | null) => void;
+  onChangeTeam: (id: string, teamId: string | null) => void;
+  onChangeSkill: (
+    id: string,
+    skillId: string | null,
+    level: SkillLevel | null,
+  ) => void;
   onCommitField: <K extends keyof Task>(id: string, key: K, value: Task[K]) => void;
   onDelete: (id: string) => void;
 }) {
   const primary = task.assignees.find((a) => a.isPrimary) ?? task.assignees[0];
 
   return (
-    <li className="group grid grid-cols-[110px_1fr_120px_140px_120px_56px_28px] items-center gap-3 px-3 py-2 hover:bg-accent/30">
+    <li className={`group ${ROW_GRID} px-3 py-2 hover:bg-accent/30`}>
       <StatusPill
         status={task.status}
         onChange={(s) => onChangeStatus(task.id, s)}
@@ -427,6 +526,17 @@ function TaskRow({
           </div>
         ) : null}
       </div>
+      <TeamSelect
+        teams={teams}
+        value={task.teamId}
+        onChange={(id) => onChangeTeam(task.id, id)}
+      />
+      <SkillSelect
+        skills={skills}
+        skillId={task.skillId}
+        level={task.skillLevel}
+        onChange={(sid, lvl) => onChangeSkill(task.id, sid, lvl)}
+      />
       <PrioritySelect
         value={task.priority}
         onChange={(p) => onCommitField(task.id, "priority", p)}

@@ -187,6 +187,52 @@ export async function setTaskAssignee(taskId: string, userId: string | null) {
   return { ok: true };
 }
 
+export async function setTaskTeam(taskId: string, teamId: string | null) {
+  await requireUser();
+  const task = await db.query.tasks.findFirst({
+    where: eq(tasks.id, taskId),
+    with: { game: true },
+  });
+  if (!task) throw new Error("Task not found");
+  await db
+    .update(tasks)
+    .set({ teamId, updatedAt: new Date() })
+    .where(eq(tasks.id, taskId));
+  revalidatePath(`/games/${task.game.slug}`);
+  return { ok: true };
+}
+
+const SkillLevelEnum = z.enum([
+  "BEGINNER",
+  "INTERMEDIATE",
+  "ADVANCED",
+  "EXPERT",
+]);
+
+export async function setTaskSkill(
+  taskId: string,
+  skillId: string | null,
+  skillLevel: z.infer<typeof SkillLevelEnum> | null,
+) {
+  await requireUser();
+  if (skillLevel) SkillLevelEnum.parse(skillLevel);
+  const task = await db.query.tasks.findFirst({
+    where: eq(tasks.id, taskId),
+    with: { game: true },
+  });
+  if (!task) throw new Error("Task not found");
+  await db
+    .update(tasks)
+    .set({
+      skillId,
+      skillLevel: skillId ? skillLevel : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(tasks.id, taskId));
+  revalidatePath(`/games/${task.game.slug}`);
+  return { ok: true };
+}
+
 export async function deleteTask(taskId: string) {
   await requireUser();
   const task = await db.query.tasks.findFirst({

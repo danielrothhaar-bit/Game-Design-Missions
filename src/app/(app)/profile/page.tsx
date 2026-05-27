@@ -19,26 +19,46 @@ export default async function ProfilePage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const [me, streak, userBadges, disciplineXp, recentXp] = await Promise.all([
-    db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
-    db.query.streaks.findFirst({ where: (s, { eq }) => eq(s.userId, userId) }),
-    db.query.userBadges.findMany({
-      where: (b, { eq }) => eq(b.userId, userId),
-      with: { badge: true },
-    }),
-    db.query.disciplineXp.findMany({
-      where: (d, { eq }) => eq(d.userId, userId),
-    }),
-    db.query.xpEvents.findMany({
-      where: (e, { eq }) => eq(e.userId, userId),
-      orderBy: (e, { desc }) => [desc(e.createdAt)],
-      limit: 10,
-    }),
-  ]);
+  const [me, streak, userBadges, disciplineXp, recentXp, assignments] =
+    await Promise.all([
+      db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
+      db.query.streaks.findFirst({ where: (s, { eq }) => eq(s.userId, userId) }),
+      db.query.userBadges.findMany({
+        where: (b, { eq }) => eq(b.userId, userId),
+        with: { badge: true },
+      }),
+      db.query.disciplineXp.findMany({
+        where: (d, { eq }) => eq(d.userId, userId),
+      }),
+      db.query.xpEvents.findMany({
+        where: (e, { eq }) => eq(e.userId, userId),
+        orderBy: (e, { desc }) => [desc(e.createdAt)],
+        limit: 10,
+      }),
+      db.query.taskAssignees.findMany({
+        where: (a, { eq }) => eq(a.userId, userId),
+        with: { task: { with: { skill: true } } },
+      }),
+    ]);
   if (!me) redirect("/login");
 
   const p = progressInLevel(me.totalXp);
   const sortedDiscipline = [...disciplineXp].sort((a, b) => b.xp - a.xp);
+
+  // Completed-task counts per skill (where this user was an assignee).
+  const skillCounts = new Map<string, { name: string; color: string; count: number }>();
+  for (const a of assignments) {
+    const t = a.task;
+    if (t.status !== "DONE" || !t.skill) continue;
+    const cur = skillCounts.get(t.skill.id) ?? {
+      name: t.skill.name,
+      color: t.skill.color,
+      count: 0,
+    };
+    cur.count += 1;
+    skillCounts.set(t.skill.id, cur);
+  }
+  const skillLog = [...skillCounts.values()].sort((a, b) => b.count - a.count);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -153,6 +173,39 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            Completed work by skill
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {skillLog.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No completed tasks with a skill yet. Tag tasks with a skill and
+              close them to build your record.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {skillLog.map((s) => (
+                <span
+                  key={s.name}
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+                  style={{ borderColor: `${s.color}66` }}
+                >
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  {s.name}
+                  <span className="font-mono font-semibold">{s.count}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -2,6 +2,7 @@ import { execSync } from "node:child_process";
 import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { seedGamesCatalog } from "./seed-games";
+import { seedDefaults } from "./seed-defaults";
 
 /**
  * Runs in Railway's preDeployCommand.
@@ -26,6 +27,9 @@ async function main() {
   console.log("→ syncing schema (drizzle-kit push --force)");
   execSync("npx drizzle-kit push --force", { stdio: "inherit" });
   console.log("✓ schema sync complete");
+
+  // Reference data (teams + skills) is always kept up to date — idempotent.
+  await seedDefaults();
 
   if (process.env.SEED_GAMES_ON_DEPLOY === "true") {
     console.log("→ SEED_GAMES_ON_DEPLOY=true — seeding game catalog");

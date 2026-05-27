@@ -1,13 +1,29 @@
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 import { LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sign in" };
 
 export default async function LoginPage() {
-  const session = await auth();
-  if (session?.user) redirect("/my-work");
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    session = null; // bad/undecodable cookie — treat as logged out
+  }
+  // Only redirect if the session points at a user that still exists.
+  // After a DB reset, a stale JWT would otherwise bounce between /login
+  // and /my-work forever.
+  if (session?.user?.id) {
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.id, session.user.id),
+    });
+    if (dbUser) redirect("/my-work");
+  }
 
   return (
     <main className="grid min-h-screen place-items-center bg-background p-6">

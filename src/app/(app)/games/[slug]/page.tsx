@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
-import { getGameBySlug, getTasksForGame, listUsers } from "@/lib/queries";
+import {
+  getGameBySlug,
+  getTasksForGame,
+  listSkills,
+  listTeams,
+  listUsers,
+} from "@/lib/queries";
 import { TaskListView } from "@/components/games/task-list-view";
-import type {
-  Priority,
-  Status,
-} from "@/components/games/status-select";
+import type { Priority, Status } from "@/components/games/status-select";
 import type { AssigneeUser } from "@/components/games/assignee-select";
+import type { SkillLevel } from "@/components/games/task-meta-selects";
 
 export default async function GameListPage({
   params,
@@ -16,9 +20,11 @@ export default async function GameListPage({
   const game = await getGameBySlug(slug);
   if (!game) notFound();
 
-  const [taskRows, users] = await Promise.all([
+  const [taskRows, users, teams, skills] = await Promise.all([
     getTasksForGame(game.id),
     listUsers(),
+    listTeams(),
+    listSkills(),
   ]);
 
   const userOptions: AssigneeUser[] = users.map((u) => ({
@@ -38,6 +44,9 @@ export default async function GameListPage({
     dueDate: t.dueDate ?? null,
     phaseId: t.phaseId ?? null,
     position: t.position,
+    teamId: t.teamId ?? null,
+    skillId: t.skillId ?? null,
+    skillLevel: (t.skillLevel as SkillLevel | null) ?? null,
     assignees: t.assignees.map((a) => ({
       isPrimary: a.isPrimary,
       user: {
@@ -63,6 +72,8 @@ export default async function GameListPage({
       }))}
       initialTasks={tasks}
       users={userOptions}
+      teams={teams.map((t) => ({ id: t.id, name: t.name, color: t.color }))}
+      skills={skills.map((s) => ({ id: s.id, name: s.name, color: s.color }))}
     />
   );
 }

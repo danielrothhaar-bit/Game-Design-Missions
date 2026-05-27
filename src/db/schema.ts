@@ -68,6 +68,13 @@ export const discipline = pgEnum("discipline", [
   "OTHER",
 ]);
 
+export const experienceLevel = pgEnum("experience_level", [
+  "BEGINNER",
+  "INTERMEDIATE",
+  "ADVANCED",
+  "EXPERT",
+]);
+
 export const xpReason = pgEnum("xp_reason", [
   "TASK_CLOSED",
   "TASK_CLOSED_EARLY",
@@ -162,6 +169,37 @@ export const verificationTokens = pgTable(
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
+/* ───────────────────── reference tables ────────────────────── */
+
+export const teams = pgTable(
+  "team",
+  {
+    id: text()
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    name: varchar({ length: 80 }).notNull(),
+    slug: varchar({ length: 90 }).notNull(),
+    color: varchar({ length: 16 }).notNull().default("#3b82f6"),
+    order: integer().notNull().default(0),
+  },
+  (t) => [uniqueIndex("team_slug_idx").on(t.slug)],
+);
+
+export const skills = pgTable(
+  "skill",
+  {
+    id: text()
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    name: varchar({ length: 80 }).notNull(),
+    slug: varchar({ length: 90 }).notNull(),
+    color: varchar({ length: 16 }).notNull().default("#a855f7"),
+    order: integer().notNull().default(0),
+    archived: boolean().notNull().default(false),
+  },
+  (t) => [uniqueIndex("skill_slug_idx").on(t.slug)],
+);
+
 /* ───────────────────── domain tables ────────────────────── */
 
 export const games = pgTable(
@@ -224,6 +262,9 @@ export const tasks = pgTable("task", {
   status: taskStatus().notNull().default("TODO"),
   priority: taskPriority().notNull().default("MEDIUM"),
   discipline: discipline(),
+  teamId: text().references(() => teams.id, { onDelete: "set null" }),
+  skillId: text().references(() => skills.id, { onDelete: "set null" }),
+  skillLevel: experienceLevel(),
   estimate: integer().notNull().default(1),
   estimateLocked: boolean().notNull().default(false),
   dueDate: timestamp({ mode: "date", withTimezone: true }),
@@ -480,6 +521,8 @@ export const phasesRelations = relations(phases, ({ one, many }) => ({
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
   game: one(games, { fields: [tasks.gameId], references: [games.id] }),
   phase: one(phases, { fields: [tasks.phaseId], references: [phases.id] }),
+  team: one(teams, { fields: [tasks.teamId], references: [teams.id] }),
+  skill: one(skills, { fields: [tasks.skillId], references: [skills.id] }),
   createdBy: one(users, {
     fields: [tasks.createdById],
     references: [users.id],
@@ -545,3 +588,5 @@ export type Label = typeof labels.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Badge = typeof badges.$inferSelect;
 export type XpEvent = typeof xpEvents.$inferSelect;
+export type Team = typeof teams.$inferSelect;
+export type Skill = typeof skills.$inferSelect;

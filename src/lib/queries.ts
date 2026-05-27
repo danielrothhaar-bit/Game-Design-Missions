@@ -2,6 +2,19 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { games, users } from "@/db/schema";
 
+export async function listTeams() {
+  return db.query.teams.findMany({
+    orderBy: (t, { asc }) => [asc(t.order), asc(t.name)],
+  });
+}
+
+export async function listSkills(includeArchived = false) {
+  return db.query.skills.findMany({
+    where: includeArchived ? undefined : (s, { eq: eqOp }) => eqOp(s.archived, false),
+    orderBy: (s, { asc }) => [asc(s.order), asc(s.name)],
+  });
+}
+
 export async function listGames() {
   return db.query.games.findMany({
     orderBy: [desc(games.createdAt)],
@@ -36,6 +49,8 @@ export async function getTasksForGame(gameId: string) {
       assignees: { with: { user: true } },
       labels: { with: { label: true } },
       phase: true,
+      team: true,
+      skill: true,
     },
   });
 }
