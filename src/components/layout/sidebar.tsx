@@ -74,6 +74,9 @@ export function Sidebar({
           <SidebarLink href="/dashboard" icon="dashboard" label="Dashboard" />
           <SidebarLink href="/games" icon="grid" label="All Games" exact />
           <SidebarLink href="/team" icon="users" label="Team" exact />
+          {isAdmin ? (
+            <SidebarLink href="/admin" icon="shield" label="Admin" />
+          ) : null}
         </div>
 
         {divisions.map((div) => (
@@ -87,12 +90,6 @@ export function Sidebar({
         ))}
 
         <SidequestSection sidequests={sidequests} />
-
-        {isAdmin ? (
-          <div className="mt-4">
-            <SidebarLink href="/admin" icon="shield" label="Admin" />
-          </div>
-        ) : null}
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
