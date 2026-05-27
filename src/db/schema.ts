@@ -211,6 +211,28 @@ export const gameStatusOptions = pgTable("game_status_option", {
   order: integer().notNull().default(0),
 });
 
+// Editable business divisions. `slug` is stored on game.division.
+export const divisions = pgTable("division", {
+  slug: varchar({ length: 32 }).primaryKey(),
+  label: varchar({ length: 60 }).notNull(),
+  color: varchar({ length: 16 }).notNull().default("#7c3aed"),
+  order: integer().notNull().default(0),
+});
+
+// Per-user division visibility (denylist: a row with hidden=true means the
+// user does not see that division in their sidebar).
+export const userDivisions = pgTable(
+  "user_division",
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    divisionSlug: varchar({ length: 32 }).notNull(),
+    hidden: boolean().notNull().default(false),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.divisionSlug] })],
+);
+
 /* ─────────────── phase task templates ─────────────── */
 
 export const phaseTemplates = pgTable("phase_template", {
@@ -722,3 +744,4 @@ export type Skill = typeof skills.$inferSelect;
 export type AppConfig = typeof appConfig.$inferSelect;
 export type GameStatusOption = typeof gameStatusOptions.$inferSelect;
 export type UserSkill = typeof userSkills.$inferSelect;
+export type Division = typeof divisions.$inferSelect;

@@ -3,7 +3,12 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listSkills, listTeams, listGameStatuses } from "@/lib/queries";
+import {
+  listSkills,
+  listTeams,
+  listGameStatuses,
+  listDivisions,
+} from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
 import { getPhaseTemplates } from "@/db/phase-templates";
 import { SkillsAdmin } from "@/components/admin/skills-admin";
@@ -12,6 +17,7 @@ import { XpConfigAdmin } from "@/components/admin/xp-config-admin";
 import { BadgesAdmin } from "@/components/admin/badges-admin";
 import { GameStatusesAdmin } from "@/components/admin/game-statuses-admin";
 import { UsersAdmin } from "@/components/admin/users-admin";
+import { DivisionsAdmin } from "@/components/admin/divisions-admin";
 
 export const metadata = { title: "Admin" };
 
@@ -46,11 +52,23 @@ export default async function AdminPage() {
     db.query.userSkills.findMany(),
   ]);
 
+  const [divisionRows, userDivisionRows] = await Promise.all([
+    listDivisions(),
+    db.query.userDivisions.findMany(),
+  ]);
+
   const skillsByUser = new Map<string, Record<string, number>>();
   for (const us of userSkillRows) {
     const m = skillsByUser.get(us.userId) ?? {};
     m[us.skillId] = us.level;
     skillsByUser.set(us.userId, m);
+  }
+  const hiddenDivsByUser = new Map<string, string[]>();
+  for (const ud of userDivisionRows) {
+    if (!ud.hidden) continue;
+    const arr = hiddenDivsByUser.get(ud.userId) ?? [];
+    arr.push(ud.divisionSlug);
+    hiddenDivsByUser.set(ud.userId, arr);
   }
 
   return (
@@ -69,6 +87,7 @@ export default async function AdminPage() {
           <TabsTrigger value="skills">Skills</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="statuses">Game Statuses</TabsTrigger>
+          <TabsTrigger value="divisions">Divisions</TabsTrigger>
           <TabsTrigger value="phases">Phase Tasks</TabsTrigger>
         </TabsList>
 
@@ -140,12 +159,17 @@ export default async function AdminPage() {
                   name: s.name,
                   color: s.color,
                 }))}
+                divisions={divisionRows.map((d) => ({
+                  slug: d.slug,
+                  label: d.label,
+                }))}
                 initialUsers={userRows.map((u) => ({
                   id: u.id,
                   name: u.name,
                   email: u.email,
                   role: u.role,
                   skills: skillsByUser.get(u.id) ?? {},
+                  hiddenDivisions: hiddenDivsByUser.get(u.id) ?? [],
                 }))}
               />
             </CardContent>
@@ -163,6 +187,23 @@ export default async function AdminPage() {
                   slug: s.slug,
                   label: s.label,
                   color: s.color,
+                }))}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="divisions" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Divisions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DivisionsAdmin
+                initial={divisionRows.map((d) => ({
+                  slug: d.slug,
+                  label: d.label,
+                  color: d.color,
                 }))}
               />
             </CardContent>

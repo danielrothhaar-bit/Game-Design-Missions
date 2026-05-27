@@ -8,7 +8,6 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
 import { progressInLevel, titleForLevel, type XpConfig } from "@/lib/xp";
-import { DIVISIONS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Game = {
@@ -21,6 +20,7 @@ type Game = {
 };
 
 type StatusOption = { slug: string; label: string };
+type DivisionOption = { slug: string; label: string };
 type Sidequest = {
   slug: string;
   name: string;
@@ -31,12 +31,14 @@ type Sidequest = {
 export function Sidebar({
   games,
   statuses,
+  divisions,
   sidequests,
   user,
   xpConfig,
 }: {
   games: Game[];
   statuses: StatusOption[];
+  divisions: DivisionOption[];
   sidequests: Sidequest[];
   user: {
     name: string | null;
@@ -73,7 +75,7 @@ export function Sidebar({
           <SidebarLink href="/games" icon="grid" label="All Games" exact />
         </div>
 
-        {DIVISIONS.map((div) => (
+        {divisions.map((div) => (
           <DivisionSection
             key={div.slug}
             label={div.label}

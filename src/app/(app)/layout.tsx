@@ -6,6 +6,8 @@ import {
   listGames,
   listGameStatuses,
   listSidequests,
+  listDivisions,
+  hiddenDivisionsForUser,
 } from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
 import { resolveUsers } from "@/lib/impersonation";
@@ -20,12 +22,16 @@ export default async function AppLayout({
   const { effective: user, impersonating } = await resolveUsers();
   if (!user) redirect("/login");
 
-  const [games, xpConfig, statuses, sidequests] = await Promise.all([
-    listGames(),
-    getXpConfig(),
-    listGameStatuses(),
-    listSidequests(),
-  ]);
+  const [games, xpConfig, statuses, sidequests, allDivisions, hiddenDivs] =
+    await Promise.all([
+      listGames(),
+      getXpConfig(),
+      listGameStatuses(),
+      listSidequests(),
+      listDivisions(),
+      hiddenDivisionsForUser(user.id),
+    ]);
+  const visibleDivisions = allDivisions.filter((d) => !hiddenDivs.has(d.slug));
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden">
@@ -35,6 +41,10 @@ export default async function AppLayout({
       <div className="flex min-h-0 flex-1 w-full overflow-hidden">
       <Sidebar
         statuses={statuses.map((s) => ({ slug: s.slug, label: s.label }))}
+        divisions={visibleDivisions.map((d) => ({
+          slug: d.slug,
+          label: d.label,
+        }))}
         games={games.map((g) => ({
           slug: g.slug,
           name: g.name,

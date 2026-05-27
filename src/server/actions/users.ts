@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { userSkills, users } from "@/db/schema";
+import { userDivisions, userSkills, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/authz";
 
 const RoleEnum = z.enum(["OWNER", "ADMIN", "DESIGNER", "VIEWER"]);
@@ -58,6 +58,24 @@ export async function updateUserName(userId: string, name: string) {
   await requireAdmin();
   const n = z.string().min(1).max(120).parse(name.trim());
   await db.update(users).set({ name: n }).where(eq(users.id, userId));
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function setUserDivisionVisible(
+  userId: string,
+  divisionSlug: string,
+  visible: boolean,
+) {
+  await requireAdmin();
+  await db
+    .insert(userDivisions)
+    .values({ userId, divisionSlug, hidden: !visible })
+    .onConflictDoUpdate({
+      target: [userDivisions.userId, userDivisions.divisionSlug],
+      set: { hidden: !visible },
+    });
   revalidatePath("/admin");
   revalidatePath("/", "layout");
   return { ok: true };

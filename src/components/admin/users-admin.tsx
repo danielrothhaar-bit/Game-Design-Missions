@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import {
   createUser,
+  setUserDivisionVisible,
   setUserSkillLevel,
   updateUserName,
   updateUserRole,
@@ -21,12 +22,14 @@ type Role = "OWNER" | "ADMIN" | "DESIGNER" | "VIEWER";
 const ROLES: Role[] = ["OWNER", "ADMIN", "DESIGNER", "VIEWER"];
 
 type SkillOpt = { id: string; name: string; color: string };
+type DivisionOpt = { slug: string; label: string };
 type User = {
   id: string;
   name: string | null;
   email: string;
   role: Role;
   skills: Record<string, number>; // skillId -> level 0..4
+  hiddenDivisions: string[]; // division slugs the user does NOT see
 };
 
 const LEVEL_LABEL = ["None", "Beg", "Int", "Adv", "Exp"];
@@ -35,9 +38,11 @@ const LEVEL_COLOR = ["#52525b", "#22c55e", "#eab308", "#ef4444", "#a855f7"];
 export function UsersAdmin({
   initialUsers,
   skills,
+  divisions,
 }: {
   initialUsers: User[];
   skills: SkillOpt[];
+  divisions: DivisionOpt[];
 }) {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -71,6 +76,7 @@ export function UsersAdmin({
             email: e,
             role,
             skills: {},
+            hiddenDivisions: [],
           },
         ]);
         setEmail("");
@@ -108,6 +114,28 @@ export function UsersAdmin({
             prev.map((u) => (u.id === id ? { ...u, role: before } : u)),
           );
         toast.error(err instanceof Error ? err.message : "Could not change role");
+      }
+    });
+  }
+
+  function toggleDivision(userId: string, slug: string, visible: boolean) {
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === userId
+          ? {
+              ...u,
+              hiddenDivisions: visible
+                ? u.hiddenDivisions.filter((s) => s !== slug)
+                : [...new Set([...u.hiddenDivisions, slug])],
+            }
+          : u,
+      ),
+    );
+    start(async () => {
+      try {
+        await setUserDivisionVisible(userId, slug, visible);
+      } catch {
+        toast.error("Could not update division visibility");
       }
     });
   }
@@ -167,9 +195,13 @@ export function UsersAdmin({
             key={u.id}
             user={u}
             skills={skills}
+            divisions={divisions}
             onChangeName={(n) => changeName(u.id, n)}
             onChangeRole={(r) => changeRole(u.id, r)}
             onSetSkill={(skillId, level) => setSkill(u.id, skillId, level)}
+            onToggleDivision={(slug, visible) =>
+              toggleDivision(u.id, slug, visible)
+            }
             onViewAs={() => viewAs(u.id)}
           />
         ))}
@@ -181,16 +213,20 @@ export function UsersAdmin({
 function UserRow({
   user,
   skills,
+  divisions,
   onChangeName,
   onChangeRole,
   onSetSkill,
+  onToggleDivision,
   onViewAs,
 }: {
   user: User;
   skills: SkillOpt[];
+  divisions: DivisionOpt[];
   onChangeName: (name: string) => void;
   onChangeRole: (r: Role) => void;
   onSetSkill: (skillId: string, level: number) => void;
+  onToggleDivision: (slug: string, visible: boolean) => void;
   onViewAs: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -252,7 +288,37 @@ function UserRow({
         </Button>
       </div>
       {open ? (
-        <div className="grid gap-x-6 gap-y-3 border-t border-border px-4 py-3 sm:grid-cols-2">
+        <div className="space-y-4 border-t border-border px-4 py-3">
+          <div>
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Visible divisions
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {divisions.map((d) => {
+                const visible = !user.hiddenDivisions.includes(d.slug);
+                return (
+                  <button
+                    key={d.slug}
+                    type="button"
+                    onClick={() => onToggleDivision(d.slug, !visible)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                      visible
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                        : "border-border text-muted-foreground line-through hover:bg-accent",
+                    )}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Skill proficiency
+            </p>
+            <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           {skills.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               No skills defined yet.
@@ -268,6 +334,8 @@ function UserRow({
               />
             ))
           )}
+            </div>
+          </div>
         </div>
       ) : null}
     </li>

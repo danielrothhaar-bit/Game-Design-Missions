@@ -1,7 +1,24 @@
 import { eq, isNull, sql } from "drizzle-orm";
 import { db } from "./index";
-import { badges, gameStatusOptions, games, skills, teams } from "./schema";
+import {
+  badges,
+  divisions,
+  gameStatusOptions,
+  games,
+  skills,
+  teams,
+} from "./schema";
 import { STARTER_BADGES } from "../lib/badges";
+
+export const DEFAULT_DIVISIONS: Array<{
+  slug: string;
+  label: string;
+  color: string;
+}> = [
+  { slug: "TEG_GAMES", label: "TEG Games", color: "#7c3aed" },
+  { slug: "GBGS", label: "GBGS", color: "#0ea5e9" },
+  { slug: "ADVENTURE_MINING", label: "Adventure Mining", color: "#f59e0b" },
+];
 
 export const DEFAULT_GAME_STATUSES: Array<{
   slug: string;
@@ -88,6 +105,14 @@ export async function seedDefaults(): Promise<void> {
     });
     if (!existing) {
       await db.insert(gameStatusOptions).values({ ...s, order: i });
+    }
+  }
+  for (const [i, d] of DEFAULT_DIVISIONS.entries()) {
+    const existing = await db.query.divisions.findFirst({
+      where: eq(divisions.slug, d.slug),
+    });
+    if (!existing) {
+      await db.insert(divisions).values({ ...d, order: i });
     }
   }
   // Backfill statusSlug from the legacy enum column for any game missing it.

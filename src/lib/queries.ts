@@ -14,6 +14,20 @@ export async function listGameStatuses() {
   });
 }
 
+export async function listDivisions() {
+  return db.query.divisions.findMany({
+    orderBy: (d, { asc }) => [asc(d.order), asc(d.label)],
+  });
+}
+
+export async function hiddenDivisionsForUser(userId: string) {
+  const rows = await db.query.userDivisions.findMany({
+    where: (ud, { eq: eqOp, and }) =>
+      and(eqOp(ud.userId, userId), eqOp(ud.hidden, true)),
+  });
+  return new Set(rows.map((r) => r.divisionSlug));
+}
+
 export async function listSkills(includeArchived = false) {
   return db.query.skills.findMany({
     where: includeArchived ? undefined : (s, { eq: eqOp }) => eqOp(s.archived, false),

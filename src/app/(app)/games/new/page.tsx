@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { listGameStatuses } from "@/lib/queries";
-import { DIVISIONS } from "@/lib/format";
+import { listGameStatuses, listDivisions } from "@/lib/queries";
 import { NewGameForm } from "./new-game-form";
 
 export const dynamic = "force-dynamic";
@@ -16,9 +15,14 @@ export default async function NewGamePage({
   if (!session?.user?.id) redirect("/login");
 
   const { division } = await searchParams;
-  const statuses = await listGameStatuses();
+  const [statuses, divisions] = await Promise.all([
+    listGameStatuses(),
+    listDivisions(),
+  ]);
   const initialDivision =
-    DIVISIONS.find((d) => d.slug === division)?.slug ?? DIVISIONS[0].slug;
+    divisions.find((d) => d.slug === division)?.slug ??
+    divisions[0]?.slug ??
+    "TEG_GAMES";
 
   return (
     <div className="mx-auto max-w-xl space-y-6 p-6">
@@ -31,7 +35,7 @@ export default async function NewGamePage({
       </header>
       <NewGameForm
         statuses={statuses.map((s) => ({ slug: s.slug, label: s.label }))}
-        divisions={DIVISIONS}
+        divisions={divisions.map((d) => ({ slug: d.slug, label: d.label }))}
         initialDivision={initialDivision}
       />
     </div>
