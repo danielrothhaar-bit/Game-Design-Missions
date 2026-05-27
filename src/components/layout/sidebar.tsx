@@ -111,7 +111,7 @@ export function Sidebar({
           </p>
         </Link>
         <div className="mt-1">
-          <SidebarLink href="/help" icon="help" label="How XP works" />
+          <SidebarLink href="/help" icon="help" label="Help" />
         </div>
         <button
           onClick={() => logoutAction()}

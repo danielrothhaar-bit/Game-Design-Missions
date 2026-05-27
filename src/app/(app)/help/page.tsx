@@ -1,6 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 
-export const metadata = { title: "Help · How XP works" };
+export const metadata = { title: "Help · How Missions works" };
+
+const SKILL_LEVELS = [
+  { label: "Beginner", color: "#22c55e" },
+  { label: "Intermediate", color: "#eab308" },
+  { label: "Advanced", color: "#ef4444" },
+  { label: "Expert", color: "#a855f7" },
+];
 
 const TIMING = [
   { when: "Early — more than a day before it's due", get: "+25% bonus", color: "#22c55e" },
@@ -21,13 +28,15 @@ export default function HelpPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          How XP works
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Help</h1>
         <p className="text-sm text-muted-foreground">
-          A plain-English guide to experience points, levels, and badges.
+          A plain-English guide to experience points and skills.
         </p>
       </header>
+
+      <h2 className="border-b border-border pb-1 text-lg font-semibold">
+        Experience points (XP)
+      </h2>
 
       <Card>
         <CardContent className="space-y-3 p-6">
@@ -172,28 +181,104 @@ export default function HelpPage() {
       </Card>
 
       <Card>
-        <CardContent className="space-y-3 p-6">
-          <h2 className="text-base font-semibold">XP vs. skill proficiency</h2>
+        <CardContent className="space-y-2 p-6">
+          <h2 className="text-base font-semibold">Tuning XP (admins)</h2>
           <p className="text-sm text-muted-foreground">
-            These are two different things:
+            Admins can change every XP number — per-point value, the timing
+            bonuses, assist %, how much each level costs, and the title names —
+            in <strong className="text-foreground">Admin → XP &amp; Levels</strong>,
+            and badges in <strong className="text-foreground">Admin → Badges</strong>.
+            Changes take effect on the next task close.
           </p>
-          <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li>
-              <strong className="text-foreground">XP / levels</strong> — overall
-              momentum from finishing any work (this guide).
-            </li>
-            <li>
-              <strong className="text-foreground">Skill proficiency</strong> —
-              how good you are at a specific craft (3D Printing, Puzzle Design,
-              …), set by admins and shown as your RPG radar. Completing
-              skill-tagged tasks builds toward promotions in those skills — a
-              separate system in the Summary tab.
-            </li>
-          </ul>
-          <p className="pt-1 text-xs text-muted-foreground">
-            Admins can tune every XP number (per-point value, timing bonuses,
-            assist %, level costs, titles) in Admin → XP &amp; Levels, and
-            badges in Admin → Badges.
+        </CardContent>
+      </Card>
+
+      <h2 className="border-b border-border pb-1 pt-2 text-lg font-semibold">
+        Skills &amp; proficiency
+      </h2>
+
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <h3 className="text-base font-semibold">What skills are</h3>
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">XP</strong> measures overall
+            momentum; <strong className="text-foreground">skills</strong> measure
+            what you&rsquo;re good at. Skills are the crafts your studio works in
+            — 3D Printing, Puzzle Design, Documentation, Electronics, and so on.
+            Admins manage the list in{" "}
+            <strong className="text-foreground">Admin → Skills</strong> (add,
+            rename, recolor).
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <h3 className="text-base font-semibold">Tagging tasks with skills</h3>
+          <p className="text-sm text-muted-foreground">
+            Any task can be tagged with one or more skills from the{" "}
+            <strong className="text-foreground">Skills</strong> column on a
+            game&rsquo;s task list, and each one gets a difficulty — how hard
+            that task is for that skill:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SKILL_LEVELS.map((l) => (
+              <span
+                key={l.label}
+                className="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: `${l.color}22`, color: l.color }}
+              >
+                {l.label}
+              </span>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Beginner → Expert (green → purple). It says &ldquo;doing this task
+            well takes about this level of skill.&rdquo;
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <h3 className="text-base font-semibold">
+            Your proficiency (the character sheet)
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Each person has a proficiency in each skill — None, Beginner,
+            Intermediate, Advanced, or Expert. Admins set these with sliders in{" "}
+            <strong className="text-foreground">Admin → Users → Settings</strong>.
+            Your proficiencies render as an RPG-style{" "}
+            <strong className="text-foreground">radar chart</strong> on your
+            Profile and My Work — a quick read of your strengths.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <h3 className="text-base font-semibold">Building your record</h3>
+          <p className="text-sm text-muted-foreground">
+            Every skill-tagged task you complete is tallied. The{" "}
+            <strong className="text-foreground">Summary</strong> tab on My Work
+            shows, for each skill, how many tasks you&rsquo;ve finished at each
+            difficulty — the evidence of what you&rsquo;ve actually been doing.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <h3 className="text-base font-semibold">Getting promoted</h3>
+          <p className="text-sm text-muted-foreground">
+            Each skill has a <strong className="text-foreground">promotion
+            threshold</strong> (set by admins in Admin → Skills). Once
+            you&rsquo;ve completed at least that many tasks at a difficulty above
+            your current proficiency, you appear in the admin&rsquo;s{" "}
+            <strong className="text-foreground">Promotion check</strong>. An
+            admin then bumps your proficiency, and your radar grows. Promotions
+            are a human decision — the system just flags when you&rsquo;re
+            ready.
           </p>
         </CardContent>
       </Card>
