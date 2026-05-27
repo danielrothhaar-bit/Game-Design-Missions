@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { seedGamesCatalog } from "./seed-games";
 import { seedDefaults } from "./seed-defaults";
+import { seedPhaseTemplates } from "./phase-templates";
 
 /**
  * Runs in Railway's preDeployCommand.
@@ -30,6 +31,8 @@ async function main() {
 
   // Reference data (teams + skills) is always kept up to date — idempotent.
   await seedDefaults();
+  // Phase templates seed once; admin edits afterward are preserved.
+  await seedPhaseTemplates();
 
   if (process.env.SEED_GAMES_ON_DEPLOY === "true") {
     console.log("→ SEED_GAMES_ON_DEPLOY=true — seeding game catalog");

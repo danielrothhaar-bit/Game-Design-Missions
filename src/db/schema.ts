@@ -200,6 +200,30 @@ export const skills = pgTable(
   (t) => [uniqueIndex("skill_slug_idx").on(t.slug)],
 );
 
+/* ─────────────── phase task templates ─────────────── */
+
+export const phaseTemplates = pgTable("phase_template", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: varchar({ length: 120 }).notNull(),
+  kind: phaseKind().notNull().default("CUSTOM"),
+  color: varchar({ length: 16 }).notNull().default("#64748b"),
+  order: integer().notNull().default(0),
+});
+
+export const phaseTemplateTasks = pgTable("phase_template_task", {
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  phaseTemplateId: text()
+    .notNull()
+    .references(() => phaseTemplates.id, { onDelete: "cascade" }),
+  title: varchar({ length: 280 }).notNull(),
+  teamId: text().references(() => teams.id, { onDelete: "set null" }),
+  order: integer().notNull().default(0),
+});
+
 /* ───────────────────── domain tables ────────────────────── */
 
 export const games = pgTable(
@@ -566,6 +590,27 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   }),
   mentions: many(mentions),
 }));
+
+export const phaseTemplatesRelations = relations(
+  phaseTemplates,
+  ({ many }) => ({
+    tasks: many(phaseTemplateTasks),
+  }),
+);
+
+export const phaseTemplateTasksRelations = relations(
+  phaseTemplateTasks,
+  ({ one }) => ({
+    template: one(phaseTemplates, {
+      fields: [phaseTemplateTasks.phaseTemplateId],
+      references: [phaseTemplates.id],
+    }),
+    team: one(teams, {
+      fields: [phaseTemplateTasks.teamId],
+      references: [teams.id],
+    }),
+  }),
+);
 
 export const userBadgesRelations = relations(userBadges, ({ one }) => ({
   user: one(users, { fields: [userBadges.userId], references: [users.id] }),

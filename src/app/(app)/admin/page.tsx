@@ -13,8 +13,10 @@ import {
   xpForLevel,
 } from "@/lib/xp";
 import { STARTER_BADGES } from "@/lib/badges";
-import { listSkills } from "@/lib/queries";
+import { listSkills, listTeams } from "@/lib/queries";
+import { getPhaseTemplates } from "@/db/phase-templates";
 import { SkillsAdmin } from "@/components/admin/skills-admin";
+import { PhaseTasksAdmin } from "@/components/admin/phase-tasks-admin";
 
 export const metadata = { title: "Admin" };
 
@@ -30,7 +32,11 @@ export default async function AdminPage() {
   });
   if (!me) redirect("/login");
 
-  const skills = await listSkills(true);
+  const [skills, teams, phaseTemplates] = await Promise.all([
+    listSkills(true),
+    listTeams(),
+    getPhaseTemplates(),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -130,16 +136,23 @@ export default async function AdminPage() {
         </TabsContent>
 
         <TabsContent value="phases" className="mt-4">
-          <Card>
-            <CardContent className="grid place-items-center gap-2 py-12 text-center">
-              <p className="text-sm font-medium">Phase task templates</p>
-              <p className="max-w-sm text-xs text-muted-foreground">
-                Define the default tasks created for each phase when a new game
-                is added, and which team owns each one. Coming in the next
-                update, alongside the Add New Game generator.
-              </p>
-            </CardContent>
-          </Card>
+          <PhaseTasksAdmin
+            teams={teams.map((t) => ({
+              id: t.id,
+              name: t.name,
+              color: t.color,
+            }))}
+            initialPhases={phaseTemplates.map((p) => ({
+              id: p.id,
+              name: p.name,
+              color: p.color,
+              tasks: p.tasks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                teamId: t.teamId ?? null,
+              })),
+            }))}
+          />
         </TabsContent>
       </Tabs>
     </div>
