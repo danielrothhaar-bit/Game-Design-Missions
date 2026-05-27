@@ -1,20 +1,15 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { effectiveUserId } from "@/lib/impersonation";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
 import { listSkills } from "@/lib/queries";
-import {
-  taskPriorityColor,
-  taskStatusColor,
-  taskStatusLabel,
-} from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Flame, Trophy } from "lucide-react";
 import { SkillRadar } from "@/components/skill-radar";
+import { MyWorkTabs } from "@/components/my-work-tabs";
 
 export const metadata = { title: "My Work" };
 
@@ -28,7 +23,12 @@ export default async function MyWorkPage() {
       db.query.taskAssignees.findMany({
         where: (a, { eq }) => eq(a.userId, userId),
         with: {
-          task: { with: { game: true, phase: true } },
+          task: {
+            with: {
+              game: true,
+              skills: { with: { skill: true } },
+            },
+          },
         },
       }),
       db.query.streaks.findFirst({ where: (s, { eq }) => eq(s.userId, userId) }),
@@ -82,6 +82,98 @@ export default async function MyWorkPage() {
       t.dueDate.getTime() >= now &&
       t.dueDate.getTime() < now + 1000 * 60 * 60 * 24 * 3,
   ).length;
+
+  // ── Tab data ────────────────────────────────────────────────
+  const openData = tasks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    status: t.status,
+    priority: t.priority,
+    dueMs: t.dueDate ? t.dueDate.getTime() : null,
+    gameName: t.game.name,
+    gameSlug: t.game.slug,
+  }));
+
+  const doneTasks = assignments
+    .map((a) => a.task)
+    .filter((t) => t.status === "DONE");
+
+  const projMap = new Map<
+    string,
+    {
+      gameName: string;
+      gameSlug: string;
+      tasks: { id: string; title: string; completedAt: string; ms: number }[];
+    }
+  >();
+  for (const t of doneTasks) {
+    const ms = t.completedAt?.getTime() ?? t.updatedAt.getTime();
+    const entry = projMap.get(t.gameId) ?? {
+      gameName: t.game.name,
+      gameSlug: t.game.slug,
+      tasks: [],
+    };
+    entry.tasks.push({
+      id: t.id,
+      title: t.title,
+      completedAt: new Date(ms).toISOString(),
+      ms,
+    });
+    projMap.set(t.gameId, entry);
+  }
+  const completedProjects = [...projMap.values()]
+    .map((p) => ({
+      gameName: p.gameName,
+      gameSlug: p.gameSlug,
+      tasks: p.tasks
+        .sort((a, b) => b.ms - a.ms)
+        .map(({ id, title, completedAt }) => ({ id, title, completedAt })),
+      latest: Math.max(...p.tasks.map((t) => t.ms)),
+    }))
+    .sort((a, b) => b.latest - a.latest)
+    .map(({ gameName, gameSlug, tasks: ts }) => ({
+      gameName,
+      gameSlug,
+      tasks: ts,
+    }));
+
+  const LEVELS = [
+    { key: "BEGINNER", label: "Beginner", color: "#22c55e" },
+    { key: "INTERMEDIATE", label: "Intermediate", color: "#eab308" },
+    { key: "ADVANCED", label: "Advanced", color: "#ef4444" },
+    { key: "EXPERT", label: "Expert", color: "#a855f7" },
+  ];
+  const summaryMap = new Map<
+    string,
+    { skill: string; color: string; counts: Record<string, number> }
+  >();
+  for (const t of doneTasks) {
+    for (const ts of t.skills) {
+      if (!ts.skill) continue;
+      const entry = summaryMap.get(ts.skill.id) ?? {
+        skill: ts.skill.name,
+        color: ts.skill.color,
+        counts: {},
+      };
+      entry.counts[ts.level] = (entry.counts[ts.level] ?? 0) + 1;
+      summaryMap.set(ts.skill.id, entry);
+    }
+  }
+  const summaryData = [...summaryMap.values()]
+    .map((s) => {
+      const levels = LEVELS.map((l) => ({
+        label: l.label,
+        color: l.color,
+        count: s.counts[l.key] ?? 0,
+      }));
+      return {
+        skill: s.skill,
+        color: s.color,
+        levels,
+        total: levels.reduce((sum, l) => sum + l.count, 0),
+      };
+    })
+    .sort((a, b) => b.total - a.total);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
@@ -165,55 +257,11 @@ export default async function MyWorkPage() {
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Your open tasks</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {tasks.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-              Nothing assigned to you right now. Time to pick up a quest.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {tasks.map((t) => (
-                <li key={t.id}>
-                  <Link
-                    href={`/games/${t.game.slug}`}
-                    className="flex items-center gap-3 px-6 py-3 hover:bg-accent/40"
-                  >
-                    <span
-                      className={`rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${taskStatusColor(t.status)}`}
-                    >
-                      {taskStatusLabel(t.status)}
-                    </span>
-                    <span
-                      className={`w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
-                    >
-                      {t.priority.toLowerCase()}
-                    </span>
-                    <span className="flex-1 truncate">{t.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t.game.name}
-                    </span>
-                    {t.dueDate ? (
-                      <span
-                        className={`text-xs ${
-                          t.dueDate.getTime() < now
-                            ? "text-red-400"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {t.dueDate.toLocaleDateString()}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      <MyWorkTabs
+        open={openData}
+        completed={completedProjects}
+        summary={summaryData}
+      />
     </div>
   );
 }

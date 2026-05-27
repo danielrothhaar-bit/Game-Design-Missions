@@ -52,10 +52,70 @@ export default async function AdminPage() {
     db.query.userSkills.findMany(),
   ]);
 
-  const [divisionRows, userDivisionRows] = await Promise.all([
-    listDivisions(),
-    db.query.userDivisions.findMany(),
-  ]);
+  const [divisionRows, userDivisionRows, completedAssignments] =
+    await Promise.all([
+      listDivisions(),
+      db.query.userDivisions.findMany(),
+      db.query.taskAssignees.findMany({
+        with: {
+          task: {
+            columns: { status: true },
+            with: { skills: { columns: { skillId: true, level: true } } },
+          },
+        },
+      }),
+    ]);
+
+  // Promotion check: completed tasks per user/skill/difficulty vs the skill's
+  // threshold, where the member's current proficiency is below that level.
+  const DIFF_LEVEL: Record<string, number> = {
+    BEGINNER: 1,
+    INTERMEDIATE: 2,
+    ADVANCED: 3,
+    EXPERT: 4,
+  };
+  const DIFF_LABEL: Record<string, string> = {
+    BEGINNER: "Beginner",
+    INTERMEDIATE: "Intermediate",
+    ADVANCED: "Advanced",
+    EXPERT: "Expert",
+  };
+  const completedCounts = new Map<string, number>(); // userId|skillId|level
+  for (const a of completedAssignments) {
+    if (!a.task || a.task.status !== "DONE") continue;
+    for (const ts of a.task.skills) {
+      const key = `${a.userId}|${ts.skillId}|${ts.level}`;
+      completedCounts.set(key, (completedCounts.get(key) ?? 0) + 1);
+    }
+  }
+  const userById = new Map(userRows.map((u) => [u.id, u]));
+  const skillById = new Map(skills.map((s) => [s.id, s]));
+  const profByUserSkill = new Map<string, number>();
+  for (const us of userSkillRows) {
+    profByUserSkill.set(`${us.userId}|${us.skillId}`, us.level);
+  }
+  const promotions = [...completedCounts.entries()]
+    .map(([key, count]) => {
+      const [userId, skillId, level] = key.split("|");
+      const skill = skillById.get(skillId);
+      const user = userById.get(userId);
+      if (!skill || !user) return null;
+      const targetLevel = DIFF_LEVEL[level] ?? 0;
+      const proficiency = profByUserSkill.get(`${userId}|${skillId}`) ?? 0;
+      if (count < skill.promotionThreshold || proficiency >= targetLevel) {
+        return null;
+      }
+      return {
+        key,
+        userName: user.name ?? user.email,
+        skill: skill.name,
+        level: DIFF_LABEL[level] ?? level,
+        count,
+        threshold: skill.promotionThreshold,
+      };
+    })
+    .filter((p): p is NonNullable<typeof p> => p !== null)
+    .sort((a, b) => b.count - a.count);
 
   const skillsByUser = new Map<string, Record<string, number>>();
   for (const us of userSkillRows) {
@@ -79,6 +139,37 @@ export default async function AdminPage() {
           Configure progression, rewards, skills, and game templates.
         </p>
       </header>
+
+      {promotions.length > 0 ? (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardHeader>
+            <CardTitle className="text-base text-amber-300">
+              Promotion check ({promotions.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1.5">
+            {promotions.map((p) => (
+              <div
+                key={p.key}
+                className="flex items-center justify-between gap-3 text-sm"
+              >
+                <span>
+                  <strong>{p.userName}</strong> has completed {p.count}{" "}
+                  {p.level} <span className="text-muted-foreground">·</span>{" "}
+                  {p.skill}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  ready to promote to {p.level} (≥ {p.threshold})
+                </span>
+              </div>
+            ))}
+            <p className="pt-1 text-xs text-muted-foreground">
+              Set each skill&rsquo;s threshold in the Skills tab. Promote a
+              member by raising their proficiency in Users → Settings.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Tabs defaultValue="xp">
         <TabsList>
@@ -141,6 +232,7 @@ export default async function AdminPage() {
                   name: s.name,
                   color: s.color,
                   archived: s.archived,
+                  promotionThreshold: s.promotionThreshold,
                 }))}
               />
             </CardContent>

@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createSkill, deleteSkill, updateSkill } from "@/server/actions/skills";
 
-type Skill = { id: string; name: string; color: string; archived: boolean };
+type Skill = {
+  id: string;
+  name: string;
+  color: string;
+  archived: boolean;
+  promotionThreshold: number;
+};
 
 export function SkillsAdmin({ initialSkills }: { initialSkills: Skill[] }) {
   const [skills, setSkills] = useState<Skill[]>(initialSkills);
@@ -25,7 +31,13 @@ export function SkillsAdmin({ initialSkills }: { initialSkills: Skill[] }) {
         // optimistic: append a placeholder; server revalidate refreshes ids
         setSkills((prev) => [
           ...prev,
-          { id: `tmp-${Date.now()}`, name, color: newColor, archived: false },
+          {
+            id: `tmp-${prev.length}`,
+            name,
+            color: newColor,
+            archived: false,
+            promotionThreshold: 10,
+          },
         ]);
         setNewName("");
         toast.success(`Added "${name}"`);
@@ -123,6 +135,20 @@ export function SkillsAdmin({ initialSkills }: { initialSkills: Skill[] }) {
               ) : (
                 <span className="flex-1 text-sm">{s.name}</span>
               )}
+              <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                promote @
+                <Input
+                  type="number"
+                  defaultValue={s.promotionThreshold}
+                  className="h-8 w-16"
+                  title="Completed tasks at a difficulty before a member is flagged ready to promote"
+                  onBlur={(e) => {
+                    const v = Number(e.target.value);
+                    if (Number.isFinite(v) && v >= 1 && v !== s.promotionThreshold)
+                      save(s.id, { promotionThreshold: v });
+                  }}
+                />
+              </label>
               <input
                 type="color"
                 value={s.color}

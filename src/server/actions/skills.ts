@@ -40,6 +40,7 @@ const UpdateSkill = z.object({
   name: z.string().min(1).max(80).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   archived: z.boolean().optional(),
+  promotionThreshold: z.number().int().min(1).max(100000).optional(),
 });
 
 export async function updateSkill(input: z.input<typeof UpdateSkill>) {

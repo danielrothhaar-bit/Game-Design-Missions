@@ -199,6 +199,9 @@ export const skills = pgTable(
     color: varchar({ length: 16 }).notNull().default("#a855f7"),
     order: integer().notNull().default(0),
     archived: boolean().notNull().default(false),
+    // Completed tasks at a difficulty before a member is flagged as ready to
+    // be promoted to that level for this skill.
+    promotionThreshold: integer().notNull().default(10),
   },
   (t) => [uniqueIndex("skill_slug_idx").on(t.slug)],
 );
