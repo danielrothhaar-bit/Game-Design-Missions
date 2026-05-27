@@ -7,14 +7,23 @@ import { db } from "@/db";
 import {
   activities,
   disciplineXp,
+  notifications,
   streaks,
   taskAssignees,
   tasks,
+  userBadges,
   users,
   xpEvents,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { applyMultiplier, levelFromXp, multiplierFor, xpForTaskClose } from "@/lib/xp";
+import {
+  applyMultiplier,
+  levelFromXp,
+  multiplierFor,
+  xpForTaskClose,
+  type XpConfig,
+} from "@/lib/xp";
+import { getXpConfig } from "@/lib/config";
 
 const TaskStatusEnum = z.enum([
   "TODO",
@@ -255,12 +264,13 @@ async function awardCloseXp(taskId: string, closerId: string) {
   });
   if (!task) return;
 
+  const cfg = await getXpConfig();
   const primary =
     task.assignees.find((a) => a.isPrimary) ?? task.assignees[0];
   const primaryUserId = primary?.userId ?? closerId;
 
-  const base = xpForTaskClose(task.estimate);
-  const mult = multiplierFor(task.dueDate ?? null, new Date());
+  const base = xpForTaskClose(task.estimate, cfg);
+  const mult = multiplierFor(task.dueDate ?? null, new Date(), cfg);
   const amount = applyMultiplier(base, mult);
 
   await db.insert(xpEvents).values({
@@ -269,19 +279,22 @@ async function awardCloseXp(taskId: string, closerId: string) {
     gameId: task.gameId,
     amount,
     reason:
-      mult === 125
+      mult === cfg.earlyMult
         ? "TASK_CLOSED_EARLY"
-        : mult === 75
+        : mult === cfg.lateMult
           ? "TASK_CLOSED_LATE"
           : "TASK_CLOSED",
     multiplier: mult,
     discipline: task.discipline,
   });
 
-  // 25% assist XP to non-primary assignees
+  // assist XP to non-primary assignees
   const assists = task.assignees.filter((a) => a.userId !== primaryUserId);
   if (assists.length) {
-    const assistAmount = Math.max(1, Math.round((amount * 25) / 100));
+    const assistAmount = Math.max(
+      1,
+      Math.round((amount * cfg.assistPct) / 100),
+    );
     await db.insert(xpEvents).values(
       assists.map((a) => ({
         userId: a.userId,
@@ -289,20 +302,23 @@ async function awardCloseXp(taskId: string, closerId: string) {
         gameId: task.gameId,
         amount: assistAmount,
         reason: "ASSIST_REVIEW" as const,
-        multiplier: 25,
+        multiplier: cfg.assistPct,
         discipline: task.discipline,
       })),
     );
   }
 
   const touched = [primaryUserId, ...assists.map((a) => a.userId)];
-  await rollupUserXp(touched);
+  await rollupUserXp(touched, cfg);
   await Promise.all(touched.map((u) => bumpStreak(u)));
+  await Promise.all(touched.map((u) => checkAndAwardBadges(u)));
 }
 
 async function reverseCloseXpIfRecent(taskId: string) {
-  const sevenDays = 7 * 24 * 60 * 60 * 1000;
-  const cutoff = new Date(Date.now() - sevenDays);
+  const cfg = await getXpConfig();
+  const cutoff = new Date(
+    Date.now() - cfg.reopenReversalDays * 24 * 60 * 60 * 1000,
+  );
   const events = await db.query.xpEvents.findMany({
     where: (e, { eq: eqOp, and: andOp, gt: gtOp }) =>
       andOp(eqOp(e.taskId, taskId), gtOp(e.createdAt, cutoff)),
@@ -319,17 +335,17 @@ async function reverseCloseXpIfRecent(taskId: string) {
     discipline: e.discipline,
   }));
   await db.insert(xpEvents).values(reversals);
-  await rollupUserXp(Array.from(new Set(events.map((e) => e.userId))));
+  await rollupUserXp(Array.from(new Set(events.map((e) => e.userId))), cfg);
 }
 
-async function rollupUserXp(userIds: string[]) {
+async function rollupUserXp(userIds: string[], cfg: XpConfig) {
   for (const uid of userIds) {
     const sums = await db
       .select({ total: sql<number>`coalesce(sum(${xpEvents.amount}), 0)` })
       .from(xpEvents)
       .where(eq(xpEvents.userId, uid));
     const total = Number(sums[0]?.total ?? 0);
-    const level = levelFromXp(total);
+    const level = levelFromXp(total, cfg);
     await db
       .update(users)
       .set({ totalXp: total, level })
@@ -402,4 +418,79 @@ async function bumpStreak(userId: string) {
       .set({ current: 1, longest: Math.max(existing.longest, 1), lastActivityDate: today })
       .where(eq(streaks.userId, userId));
   }
+}
+
+type BadgeCriteria = {
+  type?: string;
+  threshold?: number;
+  discipline?: string;
+};
+
+async function checkAndAwardBadges(userId: string) {
+  const [badgeRows, existing, assignments, streak] = await Promise.all([
+    db.query.badges.findMany(),
+    db.query.userBadges.findMany({
+      where: eq(userBadges.userId, userId),
+    }),
+    db.query.taskAssignees.findMany({
+      where: eq(taskAssignees.userId, userId),
+      with: { task: true },
+    }),
+    db.query.streaks.findFirst({ where: eq(streaks.userId, userId) }),
+  ]);
+
+  const have = new Set(existing.map((b) => b.badgeCode));
+  const done = assignments
+    .map((a) => a.task)
+    .filter((t) => t.status === "DONE");
+  const closedCount = done.length;
+  const onTimeCount = done.filter(
+    (t) =>
+      t.dueDate &&
+      t.completedAt &&
+      t.completedAt.getTime() <= t.dueDate.getTime(),
+  ).length;
+  const disciplineCount = (d: string) =>
+    done.filter((t) => t.discipline === d).length;
+  const streakLongest = streak?.longest ?? 0;
+
+  const toAward: string[] = [];
+  for (const b of badgeRows) {
+    if (have.has(b.code)) continue;
+    const c = (b.criteria ?? {}) as BadgeCriteria;
+    const threshold = c.threshold ?? 1;
+    let met = false;
+    switch (c.type) {
+      case "TASK_CLOSED_COUNT":
+        met = closedCount >= threshold;
+        break;
+      case "ON_TIME_CLOSES":
+        met = onTimeCount >= threshold;
+        break;
+      case "DISCIPLINE_CLOSES":
+        met = c.discipline
+          ? disciplineCount(c.discipline) >= threshold
+          : false;
+        break;
+      case "STREAK":
+        met = streakLongest >= threshold;
+        break;
+      default:
+        met = false;
+    }
+    if (met) toAward.push(b.code);
+  }
+
+  if (toAward.length === 0) return;
+  await db
+    .insert(userBadges)
+    .values(toAward.map((code) => ({ userId, badgeCode: code })))
+    .onConflictDoNothing();
+  await db.insert(notifications).values(
+    toAward.map((code) => ({
+      userId,
+      type: "BADGE_EARNED" as const,
+      payload: { badgeCode: code } as Record<string, unknown>,
+    })),
+  );
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
+import { getXpConfig } from "@/lib/config";
 import { taskStatusColor, taskStatusLabel } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,8 @@ export default async function MyWorkPage() {
   ]);
 
   if (!me) redirect("/login");
-  const p = progressInLevel(me.totalXp);
+  const cfg = await getXpConfig();
+  const p = progressInLevel(me.totalXp, cfg);
 
   const tasks = assignments
     .map((a) => a.task)
@@ -84,7 +86,7 @@ export default async function MyWorkPage() {
           <div>
             <CardTitle className="text-base">Progression</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              {titleForLevel(me.level)} · Level {me.level}
+              {titleForLevel(p.level, cfg.titles)} · Level {p.level}
             </p>
           </div>
           <div className="text-right text-xs text-muted-foreground">

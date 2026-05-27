@@ -510,6 +510,23 @@ export const streaks = pgTable("streak", {
   lastActivityDate: timestamp({ mode: "date", withTimezone: true }),
 });
 
+/* ───────────────── app configuration (singleton) ────────────────── */
+
+export const appConfig = pgTable("app_config", {
+  id: varchar({ length: 20 }).primaryKey().default("global"),
+  xpPerPoint: integer().notNull().default(10),
+  onTimeMult: integer().notNull().default(100),
+  earlyMult: integer().notNull().default(125),
+  lateMult: integer().notNull().default(75),
+  assistPct: integer().notNull().default(25),
+  levelBaseXp: integer().notNull().default(100),
+  reopenReversalDays: integer().notNull().default(7),
+  titles: jsonb()
+    .$type<{ from: number; title: string }[]>()
+    .notNull()
+    .default(sql`'[]'::jsonb`),
+});
+
 /* ────────────────────── relations ─────────────────────── */
 
 export const usersRelations = relations(users, ({ many, one }) => ({
@@ -635,3 +652,4 @@ export type Badge = typeof badges.$inferSelect;
 export type XpEvent = typeof xpEvents.$inferSelect;
 export type Team = typeof teams.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
+export type AppConfig = typeof appConfig.$inferSelect;

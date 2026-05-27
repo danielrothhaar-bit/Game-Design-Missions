@@ -3,20 +3,13 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  ON_TIME,
-  EARLY,
-  LATE,
-  ASSIST_PCT,
-  TITLE_BY_LEVEL,
-  xpForLevel,
-} from "@/lib/xp";
-import { STARTER_BADGES } from "@/lib/badges";
 import { listSkills, listTeams } from "@/lib/queries";
+import { getXpConfig } from "@/lib/config";
 import { getPhaseTemplates } from "@/db/phase-templates";
 import { SkillsAdmin } from "@/components/admin/skills-admin";
 import { PhaseTasksAdmin } from "@/components/admin/phase-tasks-admin";
+import { XpConfigAdmin } from "@/components/admin/xp-config-admin";
+import { BadgesAdmin } from "@/components/admin/badges-admin";
 
 export const metadata = { title: "Admin" };
 
@@ -32,11 +25,14 @@ export default async function AdminPage() {
   });
   if (!me) redirect("/login");
 
-  const [skills, teams, phaseTemplates] = await Promise.all([
-    listSkills(true),
-    listTeams(),
-    getPhaseTemplates(),
-  ]);
+  const [skills, teams, phaseTemplates, xpConfig, badgeRows] =
+    await Promise.all([
+      listSkills(true),
+      listTeams(),
+      getPhaseTemplates(),
+      getXpConfig(),
+      db.query.badges.findMany({ orderBy: (b, { asc }) => [asc(b.name)] }),
+    ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -55,35 +51,13 @@ export default async function AdminPage() {
           <TabsTrigger value="phases">Phase Tasks</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="xp" className="mt-4 space-y-4">
+        <TabsContent value="xp" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">XP rules</CardTitle>
+              <CardTitle className="text-base">XP &amp; level rules</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <Row label="XP per estimate point" value="10 XP" />
-              <Row label="On-time multiplier" value={`${ON_TIME}%`} />
-              <Row label="Early multiplier" value={`${EARLY}%`} />
-              <Row label="Late multiplier" value={`${LATE}%`} />
-              <Row label="Reviewer assist XP" value={`${ASSIST_PCT}%`} />
-              <p className="pt-2 text-xs text-muted-foreground">
-                Editing these values lands in the next update — for now they
-                reflect the live rules.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Levels &amp; titles</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {TITLE_BY_LEVEL.map((t) => (
-                <Row
-                  key={t.from}
-                  label={`Level ${t.from}+ · ${t.title}`}
-                  value={`${xpForLevel(t.from).toLocaleString()} XP`}
-                />
-              ))}
+            <CardContent>
+              <XpConfigAdmin initial={xpConfig} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -93,26 +67,23 @@ export default async function AdminPage() {
             <CardHeader>
               <CardTitle className="text-base">Badges</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {STARTER_BADGES.map((b) => (
-                <div
-                  key={b.code}
-                  className="flex items-start justify-between gap-3 border-b border-border/60 pb-3 last:border-0 last:pb-0"
-                >
-                  <div>
-                    <p className="font-medium">{b.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {b.description}
-                    </p>
-                  </div>
-                  <Badge variant="secondary" style={{ color: b.color }}>
-                    {b.icon}
-                  </Badge>
-                </div>
-              ))}
-              <p className="pt-1 text-xs text-muted-foreground">
-                Editable badge criteria + custom badges land in the next update.
-              </p>
+            <CardContent>
+              <BadgesAdmin
+                initial={badgeRows.map((b) => {
+                  const criteria = (b.criteria ?? {}) as {
+                    type?: string;
+                    threshold?: number;
+                  };
+                  return {
+                    code: b.code,
+                    name: b.name,
+                    description: b.description,
+                    color: b.color,
+                    threshold: criteria.threshold ?? null,
+                    criteriaType: criteria.type ?? "—",
+                  };
+                })}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -155,15 +126,6 @@ export default async function AdminPage() {
           />
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono">{value}</span>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   titleForLevel,
   xpForLevel,
 } from "@/lib/xp";
+import { getXpConfig } from "@/lib/config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,7 +43,8 @@ export default async function ProfilePage() {
     ]);
   if (!me) redirect("/login");
 
-  const p = progressInLevel(me.totalXp);
+  const cfg = await getXpConfig();
+  const p = progressInLevel(me.totalXp, cfg);
   const sortedDiscipline = [...disciplineXp].sort((a, b) => b.xp - a.xp);
 
   // Completed-task counts per skill (where this user was an assignee).
@@ -75,7 +77,7 @@ export default async function ProfilePage() {
               {me.name ?? me.email}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {titleForLevel(me.level)} · Level {me.level} ·{" "}
+              {titleForLevel(p.level, cfg.titles)} · Level {p.level} ·{" "}
               {disciplineLabel(me.primaryDiscipline)}
             </p>
             <div className="mt-3">
@@ -83,7 +85,7 @@ export default async function ProfilePage() {
               <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                 <span>{me.totalXp.toLocaleString()} XP</span>
                 <span>
-                  Next: {xpForLevel(me.level).toLocaleString()} XP
+                  Next: {xpForLevel(p.level, cfg).toLocaleString()} XP
                 </span>
               </div>
             </div>

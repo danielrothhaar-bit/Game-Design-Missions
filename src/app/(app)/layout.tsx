@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { listGames, getUser } from "@/lib/queries";
+import { getXpConfig } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,10 @@ export default async function AppLayout({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const [games, user] = await Promise.all([
+  const [games, user, xpConfig] = await Promise.all([
     listGames(),
     getUser(session.user.id),
+    getXpConfig(),
   ]);
   if (!user) redirect("/login");
 
@@ -36,6 +38,7 @@ export default async function AppLayout({
           level: user.level,
           role: user.role,
         }}
+        xpConfig={xpConfig}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar

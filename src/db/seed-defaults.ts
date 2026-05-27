@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "./index";
-import { skills, teams } from "./schema";
+import { badges, skills, teams } from "./schema";
+import { STARTER_BADGES } from "../lib/badges";
 
 export const DEFAULT_TEAMS: Array<{ name: string; slug: string; color: string }> =
   [
@@ -60,7 +61,15 @@ export async function seedDefaults(): Promise<void> {
       await db.insert(skills).values({ ...s, order: i });
     }
   }
+  for (const b of STARTER_BADGES) {
+    const existing = await db.query.badges.findFirst({
+      where: eq(badges.code, b.code),
+    });
+    if (!existing) {
+      await db.insert(badges).values(b);
+    }
+  }
   console.log(
-    `✓ defaults seeded (${DEFAULT_TEAMS.length} teams, ${DEFAULT_SKILLS.length} skills)`,
+    `✓ defaults seeded (${DEFAULT_TEAMS.length} teams, ${DEFAULT_SKILLS.length} skills, ${STARTER_BADGES.length} badges)`,
   );
 }

@@ -6,7 +6,7 @@ import { ChevronRight, Plus, Trophy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
-import { progressInLevel, titleForLevel } from "@/lib/xp";
+import { progressInLevel, titleForLevel, type XpConfig } from "@/lib/xp";
 import { GAME_STATUSES, gameStatusLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,7 @@ type Game = {
 export function Sidebar({
   games,
   user,
+  xpConfig,
 }: {
   games: Game[];
   user: {
@@ -29,8 +30,9 @@ export function Sidebar({
     level: number;
     role: string;
   };
+  xpConfig: XpConfig;
 }) {
-  const p = progressInLevel(user.totalXp);
+  const p = progressInLevel(user.totalXp, xpConfig);
   const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
 
   const grouped = GAME_STATUSES.map((status) => ({
@@ -113,9 +115,9 @@ export function Sidebar({
         >
           <div className="flex items-center gap-2 text-xs">
             <Trophy className="size-3.5 text-amber-400" />
-            <span className="font-medium">Level {user.level}</span>
+            <span className="font-medium">Level {p.level}</span>
             <span className="text-muted-foreground">
-              · {titleForLevel(user.level)}
+              · {titleForLevel(p.level, xpConfig.titles)}
             </span>
           </div>
           <Progress value={p.pct} className="mt-2 h-1.5" />
