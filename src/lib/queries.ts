@@ -51,6 +51,7 @@ export async function getTasksForGame(gameId: string) {
       phase: true,
       team: true,
       skills: { with: { skill: true } },
+      createdBy: true,
     },
   });
 }

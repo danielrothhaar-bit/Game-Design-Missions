@@ -524,6 +524,17 @@ export const streaks = pgTable("streak", {
   lastActivityDate: timestamp({ mode: "date", withTimezone: true }),
 });
 
+/* ───────────────── pre-deploy data backups ────────────────── */
+
+export const backups = pgTable("backup", {
+  id: serial().primaryKey(),
+  createdAt: timestamp({ mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  reason: varchar({ length: 80 }).notNull().default("pre-deploy"),
+  payload: jsonb().$type<Record<string, unknown>>().notNull(),
+});
+
 /* ───────────────── app configuration (singleton) ────────────────── */
 
 export const appConfig = pgTable("app_config", {

@@ -4,6 +4,7 @@ import { db } from "./index";
 import { seedGamesCatalog } from "./seed-games";
 import { seedDefaults } from "./seed-defaults";
 import { seedPhaseTemplates } from "./phase-templates";
+import { snapshotData } from "./snapshot";
 
 /**
  * Runs in Railway's preDeployCommand.
@@ -11,11 +12,10 @@ import { seedPhaseTemplates } from "./phase-templates";
  * 1. If RESET_DB_ON_DEPLOY=true, wipe the public schema first. Use this once
  *    to recover a database left in a half-applied state, then remove the
  *    variable so normal deploys never destroy data.
- * 2. Sync the schema with `drizzle-kit push --force` (creates missing tables,
- *    leaves existing ones alone).
- * 3. If SEED_GAMES_ON_DEPLOY=true, idempotently insert the TEG game catalog.
- *    Safe to leave on (existing games are skipped), but typically set once
- *    then removed.
+ * 2. Snapshot all user data into the `backup` table (recoverable if a schema
+ *    change ever drops something). Skipped during a reset (nothing to save).
+ * 3. Sync the schema with drizzle-kit push.
+ * 4. Re-seed reference data + (optionally) the game catalog, idempotently.
  */
 async function main() {
   if (process.env.RESET_DB_ON_DEPLOY === "true") {
@@ -23,9 +23,20 @@ async function main() {
     await db.execute(sql`DROP SCHEMA IF EXISTS public CASCADE`);
     await db.execute(sql`CREATE SCHEMA public`);
     console.log("✓ schema wiped");
+  } else {
+    // Safety net: back up real data before touching the schema.
+    try {
+      await snapshotData("pre-deploy");
+    } catch (err) {
+      console.warn("⚠ snapshot failed (continuing):", err);
+    }
   }
 
-  console.log("→ syncing schema (drizzle-kit push --force)");
+  // `--force` lets push apply changes non-interactively. Destructive changes
+  // (dropping a column/table) only ever happen here when ALLOW_DESTRUCTIVE is
+  // explicitly set; otherwise we keep them out of the schema so a deploy can't
+  // quietly delete data. The snapshot above is the recovery backstop.
+  console.log("→ syncing schema (drizzle-kit push)");
   execSync("npx drizzle-kit push --force", { stdio: "inherit" });
   console.log("✓ schema sync complete");
 

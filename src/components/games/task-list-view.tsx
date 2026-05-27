@@ -41,6 +41,7 @@ type Task = {
   dueDate: Date | null;
   position: number;
   teamId: string | null;
+  createdByName: string | null;
   skills: TaskSkill[];
   assignees: { isPrimary: boolean; user: AssigneeUser }[];
   labels: { label: { id: string; name: string; color: string } }[];
@@ -54,10 +55,12 @@ const STATUS_FILTERS: Status[] = [
   "DONE",
 ];
 
+// Several columns are flexible (fr) so rows spread across the full width
+// instead of clustering the meta columns at the right edge.
 const GRID_DESIGN =
-  "grid grid-cols-[104px_minmax(200px,1fr)_160px_92px_120px_104px_44px_28px] items-center gap-2.5";
+  "grid grid-cols-[110px_minmax(240px,3fr)_minmax(150px,1.4fr)_110px_minmax(140px,1fr)_120px_56px_32px] items-center gap-3";
 const GRID_OTHER =
-  "grid grid-cols-[104px_minmax(180px,1fr)_140px_160px_92px_120px_104px_44px_28px] items-center gap-2.5";
+  "grid grid-cols-[110px_minmax(220px,2.6fr)_minmax(150px,1.2fr)_minmax(150px,1.4fr)_110px_minmax(140px,1fr)_120px_56px_32px] items-center gap-3";
 
 export function TaskListView({
   game,
@@ -221,6 +224,7 @@ export function TaskListView({
             dueDate: created.dueDate,
             position: created.position,
             teamId: created.teamId,
+            createdByName: "You",
             skills: [],
             assignees: [],
             labels: [],
@@ -416,7 +420,10 @@ function TaskRow({
         status={task.status}
         onChange={(s) => onChangeStatus(task.id, s)}
       />
-      <div className="min-w-0">
+      <div
+        className="min-w-0"
+        title={task.createdByName ? `Created by ${task.createdByName}` : undefined}
+      >
         <InlineEditText
           value={task.title}
           onCommit={(next) => onCommitField(task.id, "title", next)}

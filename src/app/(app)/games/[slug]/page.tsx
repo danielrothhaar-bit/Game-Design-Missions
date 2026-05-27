@@ -47,6 +47,7 @@ export default async function GameListPage({
     dueDate: t.dueDate ?? null,
     position: t.position,
     teamId: t.teamId ?? null,
+    createdByName: t.createdBy?.name ?? t.createdBy?.email ?? null,
     skills: t.skills.map((ts) => ({
       skillId: ts.skillId,
       level: ts.level as SkillLevel,
