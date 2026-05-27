@@ -15,11 +15,13 @@ import {
 } from "@/server/actions/tasks";
 import { InlineEditNumber, InlineEditText } from "./inline-edit-text";
 import {
+  PRIORITIES,
   PrioritySelect,
   StatusPill,
   type Priority,
   type Status,
 } from "./status-select";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { AssigneeSelect, type AssigneeUser } from "./assignee-select";
 import { DueDatePopover } from "./due-date-popover";
 import {
@@ -62,6 +64,30 @@ const GRID_DESIGN =
 const GRID_OTHER =
   "grid grid-cols-[110px_minmax(220px,2.6fr)_minmax(150px,1.2fr)_minmax(150px,1.4fr)_110px_minmax(140px,1fr)_120px_56px_32px] items-center gap-3";
 
+type SortKey =
+  | "status"
+  | "title"
+  | "team"
+  | "skill"
+  | "priority"
+  | "assignee"
+  | "due"
+  | "est";
+
+const STATUS_ORDER: Record<string, number> = {
+  TODO: 0,
+  IN_PROGRESS: 1,
+  IN_REVIEW: 2,
+  BLOCKED: 3,
+  DONE: 4,
+};
+const PRIORITY_ORDER: Record<string, number> = {
+  LOW: 0,
+  MEDIUM: 1,
+  HIGH: 2,
+  URGENT: 3,
+};
+
 export function TaskListView({
   game,
   initialTasks,
@@ -82,7 +108,13 @@ export function TaskListView({
   const [statusFilter, setStatusFilter] = useState<Set<Status>>(
     new Set(STATUS_FILTERS.filter((s) => s !== "DONE")),
   );
+  const [priorityFilter, setPriorityFilter] = useState<Set<Priority>>(new Set());
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
+  const [teamFilter, setTeamFilter] = useState<string | null>(null);
+  const [skillFilter, setSkillFilter] = useState<string | null>(null);
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(
+    null,
+  );
   const [, startTransition] = useTransition();
 
   const isDesign = (t: Task) =>
@@ -92,16 +124,78 @@ export function TaskListView({
     () =>
       tasks.filter((t) => {
         if (statusFilter.size > 0 && !statusFilter.has(t.status)) return false;
-        if (assigneeFilter)
-          return t.assignees.some((a) => a.user.id === assigneeFilter);
+        if (priorityFilter.size > 0 && !priorityFilter.has(t.priority))
+          return false;
+        if (assigneeFilter && !t.assignees.some((a) => a.user.id === assigneeFilter))
+          return false;
+        if (teamFilter && t.teamId !== teamFilter) return false;
+        if (skillFilter && !t.skills.some((s) => s.skillId === skillFilter))
+          return false;
         return true;
       }),
-    [tasks, statusFilter, assigneeFilter],
+    [tasks, statusFilter, priorityFilter, assigneeFilter, teamFilter, skillFilter],
   );
+
+  const teamName = (id: string | null) =>
+    id ? (teams.find((x) => x.id === id)?.name ?? "") : "";
+  const assigneeName = (t: Task) => {
+    const a = t.assignees.find((x) => x.isPrimary) ?? t.assignees[0];
+    return (a?.user.name ?? a?.user.email ?? "").toLowerCase();
+  };
+  function sortVal(t: Task, key: SortKey): string | number {
+    switch (key) {
+      case "status":
+        return STATUS_ORDER[t.status] ?? 0;
+      case "title":
+        return t.title.toLowerCase();
+      case "team":
+        return teamName(t.teamId).toLowerCase();
+      case "skill":
+        return (
+          skills.find((x) => x.id === t.skills[0]?.skillId)?.name ?? ""
+        ).toLowerCase();
+      case "priority":
+        return PRIORITY_ORDER[t.priority] ?? 0;
+      case "assignee":
+        return assigneeName(t);
+      case "due":
+        return t.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
+      case "est":
+        return t.estimate;
+    }
+  }
 
   const designTasks = filtered.filter(isDesign);
   const otherTasks = filtered.filter((t) => !isDesign(t));
-  const shown = tab === "design" ? designTasks : otherTasks;
+  const base = tab === "design" ? designTasks : otherTasks;
+  const shown = useMemo(() => {
+    if (!sort) return base;
+    const arr = [...base].sort((a, b) => {
+      const av = sortVal(a, sort.key);
+      const bv = sortVal(b, sort.key);
+      const c = av < bv ? -1 : av > bv ? 1 : 0;
+      return sort.dir === "asc" ? c : -c;
+    });
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base, sort]);
+
+  function toggleSort(key: SortKey) {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: "asc" };
+      if (prev.dir === "asc") return { key, dir: "desc" };
+      return null;
+    });
+  }
+
+  function togglePriority(p: Priority) {
+    setPriorityFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(p)) next.delete(p);
+      else next.add(p);
+      return next;
+    });
+  }
 
   const counts = useMemo(() => {
     const done = tasks.filter((t) => t.status === "DONE").length;
@@ -258,6 +352,26 @@ export function TaskListView({
           })}
         </div>
 
+        <div className="flex items-center gap-1">
+          {PRIORITIES.map((p) => {
+            const on = priorityFilter.has(p);
+            return (
+              <button
+                key={p}
+                onClick={() => togglePriority(p)}
+                className={`rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-wider transition-colors ${
+                  on
+                    ? "border-foreground/30 bg-foreground/10 text-foreground"
+                    : "border-border text-muted-foreground hover:bg-accent"
+                }`}
+                title="Filter by priority"
+              >
+                {p.toLowerCase()}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="ml-2 h-6 w-px bg-border" />
 
         <AssigneeFilterButton
@@ -265,6 +379,22 @@ export function TaskListView({
           value={assigneeFilter}
           onChange={setAssigneeFilter}
         />
+
+        <FilterSelect
+          label="Skill"
+          value={skillFilter}
+          onChange={setSkillFilter}
+          options={skills.map((s) => ({ value: s.id, label: s.name }))}
+        />
+
+        {tab === "other" ? (
+          <FilterSelect
+            label="Team"
+            value={teamFilter}
+            onChange={setTeamFilter}
+            options={teams.map((t) => ({ value: t.id, label: t.name }))}
+          />
+        ) : null}
 
         <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
           <span>
@@ -312,14 +442,32 @@ export function TaskListView({
               "border-b border-border bg-muted/30 px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground",
             )}
           >
-            <span>Status</span>
-            <span>Item</span>
-            {tab === "other" ? <span>Responsible Team</span> : null}
-            <span>Skills</span>
-            <span>Priority</span>
-            <span>Assignee</span>
-            <span>Due</span>
-            <span className="text-center">Est</span>
+            <SortHeader label="Status" col="status" sort={sort} onSort={toggleSort} />
+            <SortHeader label="Item" col="title" sort={sort} onSort={toggleSort} />
+            {tab === "other" ? (
+              <SortHeader label="Team" col="team" sort={sort} onSort={toggleSort} />
+            ) : null}
+            <SortHeader label="Skills" col="skill" sort={sort} onSort={toggleSort} />
+            <SortHeader
+              label="Priority"
+              col="priority"
+              sort={sort}
+              onSort={toggleSort}
+            />
+            <SortHeader
+              label="Assignee"
+              col="assignee"
+              sort={sort}
+              onSort={toggleSort}
+            />
+            <SortHeader label="Due" col="due" sort={sort} onSort={toggleSort} />
+            <SortHeader
+              label="Est"
+              col="est"
+              sort={sort}
+              onSort={toggleSort}
+              center
+            />
             <span />
           </div>
 
@@ -352,6 +500,75 @@ export function TaskListView({
         </div>
       </div>
     </div>
+  );
+}
+
+function SortHeader({
+  label,
+  col,
+  sort,
+  onSort,
+  center,
+}: {
+  label: string;
+  col: SortKey;
+  sort: { key: SortKey; dir: "asc" | "desc" } | null;
+  onSort: (key: SortKey) => void;
+  center?: boolean;
+}) {
+  const active = sort?.key === col;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(col)}
+      className={cn(
+        "flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider transition-colors hover:text-foreground",
+        active ? "text-foreground" : "text-muted-foreground",
+        center && "justify-center",
+      )}
+    >
+      {label}
+      {active ? (
+        sort?.dir === "asc" ? (
+          <ChevronUp className="size-3" />
+        ) : (
+          <ChevronDown className="size-3" />
+        )
+      ) : null}
+    </button>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string | null;
+  onChange: (v: string | null) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <select
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value || null)}
+      className={cn(
+        "h-7 rounded-md border bg-background px-2 text-xs",
+        value
+          ? "border-foreground/30 text-foreground"
+          : "border-border text-muted-foreground",
+      )}
+      title={`Filter by ${label.toLowerCase()}`}
+    >
+      <option value="">{label}: all</option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
