@@ -5,6 +5,7 @@ import { UserMenu } from "./user-menu";
 export function Topbar({
   games,
   user,
+  mobileNav,
 }: {
   games: { name: string; slug: string }[];
   user: {
@@ -13,9 +14,11 @@ export function Topbar({
     image: string | null;
     level: number;
   };
+  mobileNav?: React.ReactNode;
 }) {
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {mobileNav}
       <div className="ml-auto flex items-center gap-1.5">
         <CommandPalette games={games} />
         <ThemeToggle />

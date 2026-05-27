@@ -28,14 +28,7 @@ type Sidequest = {
   statusSlug: string;
 };
 
-export function Sidebar({
-  games,
-  statuses,
-  divisions,
-  sidequests,
-  user,
-  xpConfig,
-}: {
+export type SidebarProps = {
   games: Game[];
   statuses: StatusOption[];
   divisions: DivisionOption[];
@@ -48,12 +41,30 @@ export function Sidebar({
     role: string;
   };
   xpConfig: XpConfig;
-}) {
+};
+
+/** Desktop sidebar (hidden on mobile — the mobile nav reuses SidebarBody). */
+export function Sidebar(props: SidebarProps) {
+  return (
+    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+      <SidebarBody {...props} />
+    </aside>
+  );
+}
+
+export function SidebarBody({
+  games,
+  statuses,
+  divisions,
+  sidequests,
+  user,
+  xpConfig,
+}: SidebarProps) {
   const p = progressInLevel(user.totalXp, xpConfig);
   const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
 
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+    <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-4 py-4">
         <Link href="/my-work" className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
@@ -121,7 +132,7 @@ export function Sidebar({
           Sign out
         </button>
       </div>
-    </aside>
+    </div>
   );
 }
 

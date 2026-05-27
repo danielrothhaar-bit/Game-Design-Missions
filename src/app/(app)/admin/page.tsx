@@ -172,7 +172,7 @@ export default async function AdminPage() {
       ) : null}
 
       <Tabs defaultValue="xp">
-        <TabsList>
+        <TabsList className="max-w-full overflow-x-auto">
           <TabsTrigger value="xp">XP &amp; Levels</TabsTrigger>
           <TabsTrigger value="badges">Badges</TabsTrigger>
           <TabsTrigger value="skills">Skills</TabsTrigger>
