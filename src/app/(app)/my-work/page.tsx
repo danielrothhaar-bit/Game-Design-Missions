@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { effectiveUserId } from "@/lib/impersonation";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
-import { listSkills } from "@/lib/queries";
+import { listSkills, listGames, listSidequests } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +17,8 @@ export default async function MyWorkPage() {
   const userId = await effectiveUserId();
   if (!userId) redirect("/login");
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const [
     me,
     assignments,
@@ -25,6 +27,9 @@ export default async function MyWorkPage() {
     proficiencyRows,
     allSkills,
     unassignedRows,
+    dailyPlanRows,
+    gamesList,
+    sidequestList,
   ] = await Promise.all([
       db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
       db.query.taskAssignees.findMany({
@@ -54,9 +59,20 @@ export default async function MyWorkPage() {
           game: { columns: { name: true, slug: true } },
         },
       }),
+      db.query.dailyPlans.findMany({
+        where: (dp, { eq, and }) =>
+          and(eq(dp.userId, userId), eq(dp.planDate, today)),
+      }),
+      listGames(),
+      listSidequests(),
     ]);
 
   if (!me) redirect("/login");
+
+  const planSet = new Set(dailyPlanRows.map((d) => d.taskId));
+  const projectOptions = [...gamesList, ...sidequestList]
+    .map((g) => ({ id: g.id, name: g.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const skillNameById = new Map(allSkills.map((s) => [s.id, s.name]));
   const proficiency = proficiencyRows
@@ -106,6 +122,7 @@ export default async function MyWorkPage() {
     dueMs: t.dueDate ? t.dueDate.getTime() : null,
     gameName: t.game.name,
     gameSlug: t.game.slug,
+    doToday: planSet.has(t.id),
   }));
 
   const doneTasks = assignments
@@ -290,6 +307,7 @@ export default async function MyWorkPage() {
         completed={completedProjects}
         summary={summaryData}
         unassigned={unassignedData}
+        projects={projectOptions}
       />
     </div>
   );

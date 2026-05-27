@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   integer,
   jsonb,
   pgEnum,
@@ -573,6 +574,25 @@ export const disciplineXp = pgTable(
     xp: integer().notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.userId, t.discipline] })],
+);
+
+/**
+ * "Do today" plan: a per-user, per-task flag stamped with the date it was
+ * set. The Today view only shows rows whose planDate is the current day, so
+ * the plan naturally resets each day with no cron.
+ */
+export const dailyPlans = pgTable(
+  "daily_plan",
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    taskId: text()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    planDate: date({ mode: "string" }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.taskId] })],
 );
 
 export const streaks = pgTable("streak", {

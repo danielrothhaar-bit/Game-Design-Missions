@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   activities,
+  dailyPlans,
   disciplineXp,
   notifications,
   streaks,
@@ -250,6 +251,70 @@ export async function setTaskSkills(
   }
   await db.update(tasks).set({ updatedAt: new Date() }).where(eq(tasks.id, taskId));
   revalidatePath(`/games/${task.game.slug}`);
+  return { ok: true };
+}
+
+/** Today, as YYYY-MM-DD (UTC) — shared by the read + write paths. */
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Create a task in a game/project and assign the current user to it. */
+export async function quickAddTask(gameId: string, title: string) {
+  const userId = await effectiveUserId();
+  if (!userId) throw new Error("Not authenticated");
+  const t = z.string().min(1).max(280).parse(title.trim());
+  const game = await db.query.games.findFirst({
+    where: (g, { eq: eqOp }) => eqOp(g.id, gameId),
+  });
+  if (!game) throw new Error("Project not found");
+
+  const maxPosRow = await db
+    .select({ max: sql<number>`coalesce(max(${tasks.position}), 0)` })
+    .from(tasks)
+    .where(eq(tasks.gameId, gameId));
+
+  const [created] = await db
+    .insert(tasks)
+    .values({
+      gameId,
+      title: t,
+      position: (maxPosRow[0]?.max ?? 0) + 1,
+      createdById: userId,
+    })
+    .returning();
+  await db
+    .insert(taskAssignees)
+    .values({ taskId: created.id, userId, isPrimary: true });
+  await db.insert(activities).values({
+    entityType: "task",
+    entityId: created.id,
+    gameId,
+    actorId: userId,
+    verb: "CREATED",
+  });
+  revalidatePath("/my-work");
+  revalidatePath(`/games/${game.slug}`);
+  return { ok: true };
+}
+
+export async function setDoToday(taskId: string, planned: boolean) {
+  const userId = await effectiveUserId();
+  if (!userId) throw new Error("Not authenticated");
+  if (planned) {
+    await db
+      .insert(dailyPlans)
+      .values({ userId, taskId, planDate: todayStr() })
+      .onConflictDoUpdate({
+        target: [dailyPlans.userId, dailyPlans.taskId],
+        set: { planDate: todayStr() },
+      });
+  } else {
+    await db
+      .delete(dailyPlans)
+      .where(and(eq(dailyPlans.userId, userId), eq(dailyPlans.taskId, taskId)));
+  }
+  revalidatePath("/my-work");
   return { ok: true };
 }
 

@@ -1,13 +1,24 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Plus, Sun } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { taskPriorityColor, taskStatusColor, taskStatusLabel } from "@/lib/format";
-import { claimTask } from "@/server/actions/tasks";
+import { claimTask, quickAddTask, setDoToday } from "@/server/actions/tasks";
+import { cn } from "@/lib/utils";
 
 export type UnassignedTask = {
   id: string;
@@ -25,6 +36,7 @@ export type OpenTask = {
   dueMs: number | null;
   gameName: string;
   gameSlug: string;
+  doToday: boolean;
 };
 
 export type CompletedProject = {
@@ -40,25 +52,36 @@ export type SkillSummary = {
   total: number;
 };
 
+type Project = { id: string; name: string };
+
 export function MyWorkTabs({
   open,
   completed,
   summary,
   unassigned,
+  projects,
 }: {
   open: OpenTask[];
   completed: CompletedProject[];
   summary: SkillSummary[];
   unassigned: UnassignedTask[];
+  projects: Project[];
 }) {
+  const router = useRouter();
+  const [, startAction] = useTransition();
   const completedCount = completed.reduce((s, p) => s + p.tasks.length, 0);
   // eslint-disable-next-line react-hooks/purity -- overdue comparison at render
   const now = Date.now();
-  const router = useRouter();
-  const [claiming, startClaim] = useTransition();
+
+  const today = open.filter((t) => t.doToday);
+
+  // New task dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+  const [title, setTitle] = useState("");
 
   function claim(id: string) {
-    startClaim(async () => {
+    startAction(async () => {
       try {
         await claimTask(id);
         toast.success("Task claimed — it's now yours.");
@@ -69,65 +92,76 @@ export function MyWorkTabs({
     });
   }
 
+  function toggleToday(id: string, next: boolean) {
+    startAction(async () => {
+      try {
+        await setDoToday(id, next);
+        router.refresh();
+      } catch {
+        toast.error("Could not update Today list");
+      }
+    });
+  }
+
+  function createTask() {
+    if (!projectId || !title.trim()) {
+      toast.error("Pick a project and enter a title.");
+      return;
+    }
+    startAction(async () => {
+      try {
+        await quickAddTask(projectId, title.trim());
+        toast.success("Task created and assigned to you.");
+        setTitle("");
+        setDialogOpen(false);
+        router.refresh();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not create task");
+      }
+    });
+  }
+
   return (
     <Tabs defaultValue="open">
-      <TabsList>
-        <TabsTrigger value="open">Open ({open.length})</TabsTrigger>
-        <TabsTrigger value="unassigned">
-          Unassigned ({unassigned.length})
-        </TabsTrigger>
-        <TabsTrigger value="completed">
-          Completed ({completedCount})
-        </TabsTrigger>
-        <TabsTrigger value="summary">Summary</TabsTrigger>
-      </TabsList>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <TabsList className="max-w-full overflow-x-auto">
+          <TabsTrigger value="open">Open ({open.length})</TabsTrigger>
+          <TabsTrigger value="today">Today ({today.length})</TabsTrigger>
+          <TabsTrigger value="unassigned">
+            Unassigned ({unassigned.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed">
+            Completed ({completedCount})
+          </TabsTrigger>
+          <TabsTrigger value="summary">Summary</TabsTrigger>
+        </TabsList>
+        <Button size="sm" onClick={() => setDialogOpen(true)}>
+          <Plus className="size-3.5" />
+          New Task
+        </Button>
+      </div>
 
       {/* Open tasks */}
       <TabsContent value="open" className="mt-4">
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
-          {open.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-              Nothing open right now. Time to pick up a quest.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {open.map((t) => (
-                <li key={t.id}>
-                  <Link
-                    href={`/games/${t.gameSlug}`}
-                    className="flex items-center gap-3 px-6 py-3 hover:bg-accent/40"
-                  >
-                    <span
-                      className={`rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${taskStatusColor(t.status)}`}
-                    >
-                      {taskStatusLabel(t.status)}
-                    </span>
-                    <span
-                      className={`w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
-                    >
-                      {t.priority.toLowerCase()}
-                    </span>
-                    <span className="flex-1 truncate">{t.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t.gameName}
-                    </span>
-                    {t.dueMs !== null ? (
-                      <span
-                        className={`text-xs ${
-                          t.dueMs < now
-                            ? "text-red-400"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {new Date(t.dueMs).toLocaleDateString()}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <TaskList
+          tasks={open}
+          now={now}
+          empty="Nothing open right now. Time to pick up a quest."
+          onToggleToday={toggleToday}
+        />
+      </TabsContent>
+
+      {/* Today */}
+      <TabsContent value="today" className="mt-4">
+        <TaskList
+          tasks={today}
+          now={now}
+          empty="Nothing planned for today yet. Hit “Do Today” on an open task."
+          onToggleToday={toggleToday}
+        />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Your Today list clears automatically at the start of each day.
+        </p>
       </TabsContent>
 
       {/* Unassigned — claimable */}
@@ -140,10 +174,7 @@ export function MyWorkTabs({
           ) : (
             <ul className="divide-y divide-border">
               {unassigned.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex items-center gap-3 px-6 py-3"
-                >
+                <li key={t.id} className="flex items-center gap-3 px-6 py-3">
                   <span
                     className={`w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
                   >
@@ -155,13 +186,12 @@ export function MyWorkTabs({
                   >
                     {t.title}
                   </Link>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="hidden text-xs text-muted-foreground sm:block">
                     {t.gameName}
                   </span>
                   <Button
                     size="sm"
                     variant="secondary"
-                    disabled={claiming}
                     onClick={() => claim(t.id)}
                   >
                     Claim
@@ -219,7 +249,7 @@ export function MyWorkTabs({
 
       {/* Summary */}
       <TabsContent value="summary" className="mt-4">
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="overflow-x-auto rounded-lg border border-border bg-card">
           {summary.length === 0 ? (
             <p className="px-6 py-10 text-center text-sm text-muted-foreground">
               Complete some skill-tagged tasks to build your record.
@@ -273,6 +303,123 @@ export function MyWorkTabs({
           useful for deciding when someone&rsquo;s ready to level up a skill.
         </p>
       </TabsContent>
+
+      {/* New Task dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New task</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="nt-project">Project</Label>
+              <select
+                id="nt-project"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nt-title">Task</Label>
+              <Input
+                id="nt-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="What needs doing?"
+                autoFocus
+                onKeyDown={(e) => e.key === "Enter" && createTask()}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              It&rsquo;ll be created in that project and assigned to you.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={createTask}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Tabs>
+  );
+}
+
+function TaskList({
+  tasks,
+  now,
+  empty,
+  onToggleToday,
+}: {
+  tasks: OpenTask[];
+  now: number;
+  empty: string;
+  onToggleToday: (id: string, next: boolean) => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      {tasks.length === 0 ? (
+        <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+          {empty}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {tasks.map((t) => (
+            <li key={t.id} className="flex items-center gap-3 px-4 py-3 sm:px-6">
+              <span
+                className={`hidden shrink-0 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider sm:inline ${taskStatusColor(t.status)}`}
+              >
+                {taskStatusLabel(t.status)}
+              </span>
+              <span
+                className={`w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
+              >
+                {t.priority.toLowerCase()}
+              </span>
+              <Link
+                href={`/games/${t.gameSlug}`}
+                className="flex-1 truncate hover:underline"
+              >
+                {t.title}
+              </Link>
+              <span className="hidden text-xs text-muted-foreground md:block">
+                {t.gameName}
+              </span>
+              {t.dueMs !== null ? (
+                <span
+                  className={`hidden text-xs sm:block ${
+                    t.dueMs < now ? "text-red-400" : "text-muted-foreground"
+                  }`}
+                >
+                  {new Date(t.dueMs).toLocaleDateString()}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => onToggleToday(t.id, !t.doToday)}
+                title={t.doToday ? "Remove from Today" : "Do today"}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition-colors",
+                  t.doToday
+                    ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <Sun className="size-3.5" />
+                {t.doToday ? "Today" : "Do Today"}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
