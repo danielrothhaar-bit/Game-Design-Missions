@@ -12,18 +12,22 @@ export function LoginForm() {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [email, setEmail] = useState("");
-  const [passcode, setPasscode] = useState("");
+  const [password, setPassword] = useState("");
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
     start(async () => {
       const res = await signIn("credentials", {
         email,
-        passcode,
+        password,
         redirect: false,
       });
       if (res?.error) {
-        toast.error("Sign in failed. Check your email and passcode.");
+        toast.error("Sign in failed. Check your email and password.");
         return;
       }
       router.push("/my-work");
@@ -47,24 +51,24 @@ export function LoginForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="passcode">Passcode</Label>
+        <Label htmlFor="password">Password</Label>
         <Input
-          id="passcode"
-          name="passcode"
+          id="password"
+          name="password"
           type="password"
           autoComplete="current-password"
           required
-          value={passcode}
-          onChange={(e) => setPasscode(e.target.value)}
-          placeholder="Studio passcode"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Your password"
         />
       </div>
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </Button>
       <p className="text-xs text-muted-foreground text-center">
-        Your studio admin sets the passcode. This sign-in method will be
-        replaced by Google SSO.
+        First time signing in? The password you enter becomes your password.
+        Google SSO is coming later.
       </p>
     </form>
   );

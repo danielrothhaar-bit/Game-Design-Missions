@@ -170,6 +170,7 @@ export default async function AdminPage() {
                   role: u.role,
                   skills: skillsByUser.get(u.id) ?? {},
                   hiddenDivisions: hiddenDivsByUser.get(u.id) ?? [],
+                  hasPassword: u.passwordHash != null,
                 }))}
               />
             </CardContent>

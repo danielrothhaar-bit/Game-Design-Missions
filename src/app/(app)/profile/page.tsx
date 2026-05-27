@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { effectiveUserId } from "@/lib/impersonation";
+import { resolveUsers } from "@/lib/impersonation";
+import { ChangePasswordForm } from "@/components/change-password-form";
 import {
   progressInLevel,
   titleForLevel,
@@ -18,8 +19,9 @@ import { SkillRadar } from "@/components/skill-radar";
 export const metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
-  const userId = await effectiveUserId();
-  if (!userId) redirect("/login");
+  const { effective, impersonating } = await resolveUsers();
+  if (!effective) redirect("/login");
+  const userId = effective.id;
 
   const [
     me,
@@ -285,6 +287,17 @@ export default async function ProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      {!impersonating ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Password</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChangePasswordForm />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

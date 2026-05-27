@@ -122,6 +122,7 @@ export const users = pgTable("user", {
   email: text().notNull().unique(),
   emailVerified: timestamp({ mode: "date", withTimezone: true }),
   image: text(),
+  passwordHash: text(),
   role: userRole().notNull().default("DESIGNER"),
   primaryDiscipline: discipline().default("OTHER"),
   totalXp: integer().notNull().default(0),

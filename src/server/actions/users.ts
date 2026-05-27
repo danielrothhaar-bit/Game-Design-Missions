@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { db } from "@/db";
 import { userDivisions, userSkills, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/authz";
+import { auth } from "@/lib/auth";
 
 const RoleEnum = z.enum(["OWNER", "ADMIN", "DESIGNER", "VIEWER"]);
 
@@ -60,6 +62,29 @@ export async function updateUserName(userId: string, name: string) {
   await db.update(users).set({ name: n }).where(eq(users.id, userId));
   revalidatePath("/admin");
   revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** Admin sets/resets another user's password. */
+export async function setUserPassword(userId: string, password: string) {
+  await requireAdmin();
+  const pw = z.string().min(6).max(200).parse(password);
+  const hash = await bcrypt.hash(pw, 10);
+  await db.update(users).set({ passwordHash: hash }).where(eq(users.id, userId));
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+/** Any signed-in user changes their own password. */
+export async function setOwnPassword(password: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+  const pw = z.string().min(6).max(200).parse(password);
+  const hash = await bcrypt.hash(pw, 10);
+  await db
+    .update(users)
+    .set({ passwordHash: hash })
+    .where(eq(users.id, session.user.id));
   return { ok: true };
 }
 

@@ -2,6 +2,7 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
@@ -70,26 +71,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: { signIn: "/login", error: "/login" },
   providers: [
     Credentials({
-      name: "Dev Login",
+      name: "Email & password",
       credentials: {
         email: { label: "Email", type: "email" },
-        passcode: { label: "Passcode", type: "password" },
+        password: { label: "Password", type: "password" },
       },
       authorize: async (raw) => {
         const email = String(raw?.email ?? "").trim().toLowerCase();
-        const passcode = String(raw?.passcode ?? "");
-        if (!email || !passcode) return null;
+        const password = String(raw?.password ?? "");
+        if (!email || !password) return null;
         if (!isAllowed(email)) return null;
-        const expected = process.env.DEV_PASSCODE;
-        if (!expected || passcode !== expected) return null;
+        if (password.length < 6) return null; // minimum length
 
         const wantOwner = isAdminEmail(email);
-
         const existing = await db.query.users.findFirst({
           where: eq(users.email, email),
         });
+
         if (existing) {
-          // Promote to OWNER if they've been added to ADMIN_EMAILS.
+          if (existing.passwordHash) {
+            // Returning user — verify their password.
+            const ok = await bcrypt.compare(password, existing.passwordHash);
+            if (!ok) return null;
+          } else {
+            // First login for an allowlisted user — claim the account by
+            // setting the password they just entered.
+            const hash = await bcrypt.hash(password, 10);
+            await db
+              .update(users)
+              .set({ passwordHash: hash })
+              .where(eq(users.id, existing.id));
+          }
           if (wantOwner && existing.role !== "OWNER") {
             await db
               .update(users)
@@ -100,12 +112,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return existing;
         }
 
-        // First user ever, or an admin email, becomes OWNER.
+        // Brand-new allowlisted user — create them with this password.
         const userCount = await db.$count(users);
         const role = wantOwner || userCount === 0 ? "OWNER" : "DESIGNER";
+        const hash = await bcrypt.hash(password, 10);
         const [created] = await db
           .insert(users)
-          .values({ email, name: email.split("@")[0], role })
+          .values({
+            email,
+            name: email.split("@")[0],
+            role,
+            passwordHash: hash,
+          })
           .returning();
         return created;
       },

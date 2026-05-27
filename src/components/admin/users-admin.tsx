@@ -13,6 +13,7 @@ import { initials } from "@/lib/format";
 import {
   createUser,
   setUserDivisionVisible,
+  setUserPassword,
   setUserSkillLevel,
   updateUserName,
   updateUserRole,
@@ -30,6 +31,7 @@ type User = {
   role: Role;
   skills: Record<string, number>; // skillId -> level 0..4
   hiddenDivisions: string[]; // division slugs the user does NOT see
+  hasPassword: boolean;
 };
 
 const LEVEL_LABEL = ["None", "Beg", "Int", "Adv", "Exp"];
@@ -77,6 +79,7 @@ export function UsersAdmin({
             role,
             skills: {},
             hiddenDivisions: [],
+            hasPassword: false,
           },
         ]);
         setEmail("");
@@ -114,6 +117,24 @@ export function UsersAdmin({
             prev.map((u) => (u.id === id ? { ...u, role: before } : u)),
           );
         toast.error(err instanceof Error ? err.message : "Could not change role");
+      }
+    });
+  }
+
+  function setPassword(userId: string, password: string) {
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, hasPassword: true } : u)),
+    );
+    start(async () => {
+      try {
+        await setUserPassword(userId, password);
+        toast.success("Password set");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not set password");
       }
     });
   }
@@ -202,6 +223,7 @@ export function UsersAdmin({
             onToggleDivision={(slug, visible) =>
               toggleDivision(u.id, slug, visible)
             }
+            onSetPassword={(pw) => setPassword(u.id, pw)}
             onViewAs={() => viewAs(u.id)}
           />
         ))}
@@ -218,6 +240,7 @@ function UserRow({
   onChangeRole,
   onSetSkill,
   onToggleDivision,
+  onSetPassword,
   onViewAs,
 }: {
   user: User;
@@ -227,6 +250,7 @@ function UserRow({
   onChangeRole: (r: Role) => void;
   onSetSkill: (skillId: string, level: number) => void;
   onToggleDivision: (slug: string, visible: boolean) => void;
+  onSetPassword: (password: string) => void;
   onViewAs: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -316,6 +340,15 @@ function UserRow({
           </div>
           <div>
             <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Password
+            </p>
+            <PasswordControl
+              hasPassword={user.hasPassword}
+              onSet={onSetPassword}
+            />
+          </div>
+          <div>
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Skill proficiency
             </p>
             <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -339,6 +372,44 @@ function UserRow({
         </div>
       ) : null}
     </li>
+  );
+}
+
+function PasswordControl({
+  hasPassword,
+  onSet,
+}: {
+  hasPassword: boolean;
+  onSet: (password: string) => void;
+}) {
+  const [pw, setPw] = useState("");
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="password"
+        value={pw}
+        onChange={(e) => setPw(e.target.value)}
+        placeholder={hasPassword ? "Set a new password" : "Set a password"}
+        className="h-8 max-w-xs"
+        autoComplete="new-password"
+      />
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={pw.length < 6}
+        onClick={() => {
+          onSet(pw);
+          setPw("");
+        }}
+      >
+        {hasPassword ? "Reset" : "Set"}
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        {hasPassword
+          ? "Password set"
+          : "No password — user sets one on first login"}
+      </span>
+    </div>
   );
 }
 
