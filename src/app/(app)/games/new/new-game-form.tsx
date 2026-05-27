@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createGame } from "@/server/actions/games";
 
 type StatusOption = { slug: string; label: string };
+type Division = { slug: string; label: string };
 
 const COLORS = [
   "#7c3aed",
@@ -26,13 +27,22 @@ const COLORS = [
   "#64748b",
 ];
 
-export function NewGameForm({ statuses }: { statuses: StatusOption[] }) {
+export function NewGameForm({
+  statuses,
+  divisions,
+  initialDivision,
+}: {
+  statuses: StatusOption[];
+  divisions: Division[];
+  initialDivision: string;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [name, setName] = useState("");
   const [statusSlug, setStatusSlug] = useState<string>(
     statuses[0]?.slug ?? "NEW",
   );
+  const [division, setDivision] = useState(initialDivision);
   const [coverColor, setCoverColor] = useState(COLORS[0]);
   const [description, setDescription] = useState("");
   const [launchDate, setLaunchDate] = useState("");
@@ -49,6 +59,7 @@ export function NewGameForm({ statuses }: { statuses: StatusOption[] }) {
         const res = await createGame({
           name: name.trim(),
           statusSlug,
+          division,
           coverColor,
           description: description.trim() || undefined,
           launchDate: launchDate ? new Date(launchDate) : null,
@@ -76,6 +87,26 @@ export function NewGameForm({ statuses }: { statuses: StatusOption[] }) {
               placeholder="e.g. Sunken Citadel"
               autoFocus
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Division</Label>
+            <div className="flex flex-wrap gap-2">
+              {divisions.map((d) => (
+                <button
+                  key={d.slug}
+                  type="button"
+                  onClick={() => setDivision(d.slug)}
+                  className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                    division === d.slug
+                      ? "border-foreground/40 bg-foreground/10 text-foreground"
+                      : "border-border text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">

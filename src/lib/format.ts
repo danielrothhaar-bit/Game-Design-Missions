@@ -86,6 +86,16 @@ export const GAME_STATUSES = [
   "ACQUISITION",
 ] as const;
 
+// Top-level business divisions. Each project belongs to one.
+export const DIVISIONS: { slug: string; label: string }[] = [
+  { slug: "TEG_GAMES", label: "TEG Games" },
+  { slug: "GBGS", label: "GBGS" },
+  { slug: "ADVENTURE_MINING", label: "Adventure Mining" },
+];
+
+export const divisionLabel = (slug: string) =>
+  DIVISIONS.find((d) => d.slug === slug)?.label ?? slug;
+
 // Fixed status set for sidequests (not editable, unlike game statuses).
 export const SIDEQUEST_STATUSES: { slug: string; label: string; color: string }[] =
   [

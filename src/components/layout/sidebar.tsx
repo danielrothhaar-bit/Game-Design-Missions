@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
 import { progressInLevel, titleForLevel, type XpConfig } from "@/lib/xp";
+import { DIVISIONS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Game = {
@@ -15,6 +16,7 @@ type Game = {
   name: string;
   coverColor: string;
   statusSlug: string;
+  division: string;
   isLead: boolean;
 };
 
@@ -48,19 +50,6 @@ export function Sidebar({
   const p = progressInLevel(user.totalXp, xpConfig);
   const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
 
-  const knownSlugs = new Set(statuses.map((s) => s.slug));
-  const grouped = [
-    ...statuses.map((s) => ({
-      label: s.label,
-      games: games.filter((g) => g.statusSlug === s.slug),
-    })),
-    // Any games whose status isn't a known option (legacy/edge) go last.
-    {
-      label: "Other",
-      games: games.filter((g) => !knownSlugs.has(g.statusSlug)),
-    },
-  ].filter((group) => group.games.length > 0);
-
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-2 px-4 py-4">
@@ -84,43 +73,15 @@ export function Sidebar({
           <SidebarLink href="/games" icon="grid" label="All Games" exact />
         </div>
 
-        <div className="mt-4">
-          <div className="flex items-center justify-between px-2.5 pb-1.5">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Games
-            </span>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Link
-                    href="/games/new"
-                    className="grid size-5 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    aria-label="New game"
-                  >
-                    <Plus className="size-3.5" />
-                  </Link>
-                }
-              />
-              <TooltipContent>New game</TooltipContent>
-            </Tooltip>
-          </div>
-
-          {games.length === 0 ? (
-            <p className="px-2.5 py-2 text-xs text-muted-foreground">
-              No games yet.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              {grouped.map((group) => (
-                <GameGroup
-                  key={group.label}
-                  label={group.label}
-                  games={group.games}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {DIVISIONS.map((div) => (
+          <DivisionSection
+            key={div.slug}
+            label={div.label}
+            slug={div.slug}
+            statuses={statuses}
+            games={games.filter((g) => g.division === div.slug)}
+          />
+        ))}
 
         <SidequestSection sidequests={sidequests} />
 
@@ -158,6 +119,69 @@ export function Sidebar({
         </button>
       </div>
     </aside>
+  );
+}
+
+function DivisionSection({
+  label,
+  slug,
+  statuses,
+  games,
+}: {
+  label: string;
+  slug: string;
+  statuses: StatusOption[];
+  games: Game[];
+}) {
+  const knownSlugs = new Set(statuses.map((s) => s.slug));
+  const grouped = [
+    ...statuses.map((s) => ({
+      label: s.label,
+      games: games.filter((g) => g.statusSlug === s.slug),
+    })),
+    {
+      label: "Other",
+      games: games.filter((g) => !knownSlugs.has(g.statusSlug)),
+    },
+  ].filter((group) => group.games.length > 0);
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between px-2.5 pb-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Link
+                href={`/games/new?division=${slug}`}
+                className="grid size-5 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                aria-label={`New ${label} project`}
+              >
+                <Plus className="size-3.5" />
+              </Link>
+            }
+          />
+          <TooltipContent>New project</TooltipContent>
+        </Tooltip>
+      </div>
+      {games.length === 0 ? (
+        <p className="px-2.5 py-1 text-xs text-muted-foreground">
+          No projects yet.
+        </p>
+      ) : (
+        <div className="space-y-1">
+          {grouped.map((group) => (
+            <GameGroup
+              key={group.label}
+              label={group.label}
+              games={group.games}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

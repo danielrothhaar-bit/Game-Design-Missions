@@ -246,8 +246,10 @@ export const games = pgTable(
     name: varchar({ length: 120 }).notNull(),
     slug: varchar({ length: 140 }).notNull(),
     description: text(),
-    // "GAME" (an escape room) or "SIDEQUEST" (lighter-weight quest).
+    // "GAME" (a project) or "SIDEQUEST" (lighter-weight quest).
     kind: varchar({ length: 16 }).notNull().default("GAME"),
+    // Business division a project belongs to (see DIVISIONS).
+    division: varchar({ length: 32 }).notNull().default("TEG_GAMES"),
     status: gameStatus().notNull().default("NEW"),
     statusSlug: varchar({ length: 40 }),
     coverColor: varchar({ length: 16 }).notNull().default("#7c3aed"),

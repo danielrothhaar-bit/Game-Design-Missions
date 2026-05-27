@@ -38,6 +38,7 @@ export default async function AppLayout({
           name: g.name,
           coverColor: g.coverColor,
           statusSlug: g.statusSlug ?? g.status,
+          division: g.division,
           isLead: g.leadUserId === user.id,
         }))}
         sidequests={sidequests.map((s) => ({

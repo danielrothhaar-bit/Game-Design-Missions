@@ -53,6 +53,7 @@ export async function updateGame(input: z.input<typeof UpdateInput>) {
 const CreateGameInput = z.object({
   name: z.string().min(1).max(120),
   statusSlug: z.string().max(40).default("NEW"),
+  division: z.string().max(32).default("TEG_GAMES"),
   coverColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#7c3aed"),
   description: z.string().max(2000).optional(),
   launchDate: z.union([z.date(), z.null()]).optional(),
@@ -80,6 +81,7 @@ export async function createGame(input: z.input<typeof CreateGameInput>) {
       name: parsed.name,
       slug,
       statusSlug: parsed.statusSlug,
+      division: parsed.division,
       coverColor: parsed.coverColor,
       description: parsed.description,
       launchDate: parsed.launchDate ?? null,
@@ -126,6 +128,7 @@ export async function createGame(input: z.input<typeof CreateGameInput>) {
 
   revalidatePath("/games");
   revalidatePath("/dashboard");
+  revalidatePath("/", "layout");
   return { slug: game.slug };
 }
 
