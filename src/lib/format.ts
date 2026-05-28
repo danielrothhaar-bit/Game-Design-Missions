@@ -23,21 +23,28 @@ const STATUS_LABEL: Record<string, string> = {
 };
 export const taskStatusLabel = (s: string) => STATUS_LABEL[s] ?? s;
 
+// Light mode: solid tinted backgrounds with dark text so pills read clearly
+// on parchment. Dark mode: keep the translucent glow that worked on slate.
 const STATUS_COLOR: Record<string, string> = {
-  TODO: "bg-zinc-500/15 text-zinc-300 border-zinc-500/30",
-  IN_PROGRESS: "bg-blue-500/15 text-blue-300 border-blue-500/30",
-  IN_REVIEW: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-  BLOCKED: "bg-red-500/15 text-red-300 border-red-500/30",
-  DONE: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  TODO:
+    "bg-stone-200 text-stone-800 border-stone-500 dark:bg-zinc-500/15 dark:text-zinc-300 dark:border-zinc-500/30",
+  IN_PROGRESS:
+    "bg-blue-100 text-blue-900 border-blue-600 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
+  IN_REVIEW:
+    "bg-amber-100 text-amber-900 border-amber-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+  BLOCKED:
+    "bg-red-100 text-red-900 border-red-700 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30",
+  DONE:
+    "bg-emerald-100 text-emerald-900 border-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
 };
 export const taskStatusColor = (s: string) =>
   STATUS_COLOR[s] ?? STATUS_COLOR.TODO;
 
 const PRIORITY_COLOR: Record<string, string> = {
-  LOW: "text-zinc-400",
-  MEDIUM: "text-blue-400",
-  HIGH: "text-amber-400",
-  URGENT: "text-red-400",
+  LOW: "text-stone-600 dark:text-zinc-400",
+  MEDIUM: "text-blue-800 dark:text-blue-400",
+  HIGH: "text-amber-800 dark:text-amber-400",
+  URGENT: "text-red-800 dark:text-red-400",
 };
 export const taskPriorityColor = (p: string) =>
   PRIORITY_COLOR[p] ?? PRIORITY_COLOR.MEDIUM;
@@ -67,12 +74,18 @@ const GAME_STATUS_LABEL: Record<string, string> = {
 export const gameStatusLabel = (s: string) => GAME_STATUS_LABEL[s] ?? s;
 
 const GAME_STATUS_COLOR: Record<string, string> = {
-  NEW: "bg-blue-500/15 text-blue-300 border-blue-500/30",
-  PROTOTYPE: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
-  CLIENT: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30",
-  OPEN: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-  LEGACY: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
-  ACQUISITION: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  NEW:
+    "bg-blue-100 text-blue-900 border-blue-600 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
+  PROTOTYPE:
+    "bg-cyan-100 text-cyan-900 border-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/30",
+  CLIENT:
+    "bg-fuchsia-100 text-fuchsia-900 border-fuchsia-600 dark:bg-fuchsia-500/15 dark:text-fuchsia-300 dark:border-fuchsia-500/30",
+  OPEN:
+    "bg-emerald-100 text-emerald-900 border-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+  LEGACY:
+    "bg-stone-200 text-stone-700 border-stone-500 dark:bg-zinc-500/15 dark:text-zinc-400 dark:border-zinc-500/30",
+  ACQUISITION:
+    "bg-amber-100 text-amber-900 border-amber-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
 };
 export const gameStatusColor = (s: string) =>
   GAME_STATUS_COLOR[s] ?? GAME_STATUS_COLOR.NEW;

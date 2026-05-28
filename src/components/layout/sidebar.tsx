@@ -7,6 +7,7 @@ import { logoutAction } from "@/server/actions/auth-actions";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
+import { Logo } from "@/components/brand/logo";
 import { progressInLevel, titleForLevel, type XpConfig } from "@/lib/xp";
 import { cn } from "@/lib/utils";
 
@@ -61,18 +62,17 @@ export function SidebarBody({
   xpConfig,
 }: SidebarProps) {
   const p = progressInLevel(user.totalXp, xpConfig);
-  const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 px-4 py-4">
+      <div className="flex items-center gap-2 px-4 py-4 md:hidden">
         <Link href="/my-work" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
-            M
-          </span>
+          <Logo size={28} />
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold">Missions</span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="font-display text-sm font-semibold tracking-[0.18em] uppercase">
+              Missions
+            </span>
+            <span className="text-[11px] italic text-muted-foreground">
               The Escape Game
             </span>
           </div>
@@ -80,16 +80,6 @@ export function SidebarBody({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-2">
-        <div className="mb-3">
-          <SidebarLink href="/my-work" icon="briefcase" label="My Quests" exact />
-          <SidebarLink href="/dashboard" icon="dashboard" label="Dashboard" />
-          <SidebarLink href="/games" icon="grid" label="All Games" exact />
-          <SidebarLink href="/team" icon="users" label="Hall of Heroes" exact />
-          {isAdmin ? (
-            <SidebarLink href="/admin" icon="shield" label="Admin" />
-          ) : null}
-        </div>
-
         {divisions.map((div) => (
           <DivisionSection
             key={div.slug}

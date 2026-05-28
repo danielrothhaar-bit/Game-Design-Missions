@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { Logo } from "@/components/brand/logo";
 import { LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +30,11 @@ export default async function LoginPage() {
     <main className="grid min-h-screen place-items-center bg-background p-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground text-xl font-semibold">
-            M
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <Logo size={88} className="text-primary" />
+          <h1 className="font-display text-3xl font-semibold tracking-wide">
             Welcome to Missions
           </h1>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-center text-sm italic text-muted-foreground">
             Sign in with your studio email. Google SSO coming soon.
           </p>
         </div>

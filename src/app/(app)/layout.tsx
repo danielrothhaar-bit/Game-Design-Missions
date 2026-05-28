@@ -77,6 +77,7 @@ export default async function AppLayout({
               image: user.image,
               level: user.level,
             }}
+            isAdmin={user.role === "OWNER" || user.role === "ADMIN"}
             mobileNav={<MobileNav {...sidebarProps} />}
           />
           <main className="flex-1 overflow-y-auto">{children}</main>
