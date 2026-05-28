@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cinzel, EB_Garamond, VT323 } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Fantasy/parchment type system:
+//   --font-display  → Cinzel (engraved-stone serif, headings & buttons)
+//   --font-sans     → EB Garamond (warm humanist serif, body)
+//   --font-mono     → VT323 (pixel mono, numbers / tags / "system" labels)
+const cinzel = Cinzel({
+  variable: "--font-display",
+  weight: ["500", "600", "700"],
+  subsets: ["latin"],
+});
+const garamond = EB_Garamond({
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
+const vt323 = VT323({
+  variable: "--font-mono",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -24,7 +38,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${cinzel.variable} ${garamond.variable} ${vt323.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
         <Providers>{children}</Providers>
