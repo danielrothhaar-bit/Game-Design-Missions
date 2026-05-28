@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils";
  * Drop a logo at public/brand/logo.png (and optionally
  * public/brand/logo-light.png for dark mode) and it'll appear everywhere.
  */
+/** Files we try in order before giving up on the bitmap and using the SVG. */
+function bitmapCandidates(dark: boolean): string[] {
+  const base = dark ? "/brand/logo-light" : "/brand/logo";
+  return [`${base}.webp`, `${base}.png`];
+}
+
 export function Logo({
   className,
   size = 32,
@@ -22,21 +28,20 @@ export function Logo({
   title?: string;
 }) {
   const { resolvedTheme } = useTheme();
-  const [src, setSrc] = useState<string | null>(
-    resolvedTheme === "dark" ? "/brand/logo-light.png" : "/brand/logo.png",
-  );
+  const candidates = bitmapCandidates(resolvedTheme === "dark");
+  const [idx, setIdx] = useState(0);
 
-  if (src) {
+  if (idx < candidates.length) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- inline brand mark
       <img
-        src={src}
+        src={candidates[idx]}
         width={size}
         height={size}
         alt={title}
         className={cn("shrink-0 object-contain", className)}
-        // If the PNG isn't there yet, drop to the SVG below.
-        onError={() => setSrc(null)}
+        // Fall through .webp → .png → SVG fallback.
+        onError={() => setIdx((i) => i + 1)}
       />
     );
   }
