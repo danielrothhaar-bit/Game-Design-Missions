@@ -6,6 +6,7 @@ import {
 } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { GameShield } from "@/components/games/game-shield";
 
 export const metadata = { title: "Dashboard" };
 
@@ -88,16 +89,23 @@ export default async function DashboardPage() {
               {items.map((s) => (
                 <Card key={s.game.id}>
                   <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-                    <div>
-                      <CardTitle className="text-base">{s.game.name}</CardTitle>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {statusLabel(s.game)}
-                        {s.daysToLaunch !== null
-                          ? s.daysToLaunch >= 0
-                            ? ` · ${s.daysToLaunch}d to launch`
-                            : ` · launched ${-s.daysToLaunch}d ago`
-                          : ""}
-                      </p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <GameShield
+                        slug={s.game.slug}
+                        size={40}
+                        className="mt-0.5"
+                      />
+                      <div className="min-w-0">
+                        <CardTitle className="text-base">{s.game.name}</CardTitle>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {statusLabel(s.game)}
+                          {s.daysToLaunch !== null
+                            ? s.daysToLaunch >= 0
+                              ? ` · ${s.daysToLaunch}d to launch`
+                              : ` · launched ${-s.daysToLaunch}d ago`
+                            : ""}
+                        </p>
+                      </div>
                     </div>
                     <Badge variant="outline">{s.pct}%</Badge>
                   </CardHeader>

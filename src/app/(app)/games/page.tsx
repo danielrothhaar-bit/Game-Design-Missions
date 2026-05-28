@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listGames, listGameStatuses } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
+import { GameShield } from "@/components/games/game-shield";
 
 export const metadata = { title: "All Games" };
 
@@ -38,11 +39,13 @@ export default async function GamesIndexPage() {
             <Link key={g.id} href={`/games/${g.slug}`}>
               <Card className="overflow-hidden transition-colors hover:border-foreground/20">
                 <div
-                  className="h-20"
+                  className="relative flex h-24 items-center justify-center overflow-hidden"
                   style={{
                     background: `linear-gradient(135deg, ${g.coverColor}, ${g.coverColor}66)`,
                   }}
-                />
+                >
+                  <GameShield slug={g.slug} size={88} />
+                </div>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold leading-tight">{g.name}</h3>

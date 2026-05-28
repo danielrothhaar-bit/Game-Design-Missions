@@ -11,6 +11,7 @@ import {
   GameStatusPicker,
 } from "@/components/games/game-header-controls";
 import { GameTabs } from "@/components/games/game-tabs";
+import { GameShield } from "@/components/games/game-shield";
 
 export default async function GameLayout({
   children,
@@ -40,6 +41,7 @@ export default async function GameLayout({
       />
       <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
         <div className="flex min-w-0 items-center gap-3">
+          <GameShield slug={game.slug} size={44} />
           <h1 className="truncate text-lg font-semibold">{game.name}</h1>
           {isSidequest ? (
             <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-sky-300">

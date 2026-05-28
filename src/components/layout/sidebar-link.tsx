@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -69,6 +70,7 @@ export function SidebarGameLink({
   isLead?: boolean;
 }) {
   const pathname = usePathname();
+  const [hasShield, setHasShield] = useState(true);
   const href = `/games/${slug}`;
   const active = pathname.startsWith(href);
   return (
@@ -83,11 +85,21 @@ export function SidebarGameLink({
         isLead && !active && "bg-amber-400/10 text-foreground",
       )}
     >
-      <span
-        className="inline-block size-2.5 shrink-0 rounded-full"
-        style={{ backgroundColor: color }}
-        aria-hidden
-      />
+      {hasShield ? (
+        // eslint-disable-next-line @next/next/no-img-element -- per-game art
+        <img
+          src={`/games/${slug}.webp`}
+          alt=""
+          className="size-5 shrink-0 object-contain"
+          onError={() => setHasShield(false)}
+        />
+      ) : (
+        <span
+          className="inline-block size-2.5 shrink-0 rounded-full"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        />
+      )}
       <span className="truncate">{name}</span>
       {isLead ? (
         <Star className="ml-auto size-3 shrink-0 fill-amber-400 text-amber-400" />
