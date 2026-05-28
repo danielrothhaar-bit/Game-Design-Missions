@@ -90,36 +90,80 @@
 }
 
 /*
- * Dark theme not yet redesigned for the new aesthetic — keep the old dark
- * palette as a fallback so things still work if a user toggles dark mode.
+ * Dark theme — "dark stone & gold" RPG. Deep warm-slate backgrounds, aged
+ * leather panels, glowing gold trim, blood-red primary, candle-warm text.
  */
 .dark {
-  --background: oklch(0.18 0.02 60);
-  --foreground: oklch(0.94 0.03 80);
-  --card: oklch(0.24 0.025 60);
-  --card-foreground: oklch(0.94 0.03 80);
-  --popover: oklch(0.24 0.025 60);
-  --popover-foreground: oklch(0.94 0.03 80);
-  --primary: oklch(0.55 0.15 30);
-  --primary-foreground: oklch(0.96 0.035 82);
-  --secondary: oklch(0.32 0.04 60);
-  --secondary-foreground: oklch(0.94 0.03 80);
-  --muted: oklch(0.28 0.03 60);
-  --muted-foreground: oklch(0.72 0.04 75);
-  --accent: oklch(0.50 0.12 80);
-  --accent-foreground: oklch(0.96 0.035 82);
-  --destructive: oklch(0.60 0.20 28);
-  --border: oklch(0.45 0.08 55);
-  --input: oklch(0.28 0.03 60);
-  --ring: oklch(0.62 0.13 75);
-  --sidebar: oklch(0.22 0.025 60);
-  --sidebar-foreground: oklch(0.94 0.03 80);
-  --sidebar-primary: oklch(0.55 0.15 30);
-  --sidebar-primary-foreground: oklch(0.96 0.035 82);
-  --sidebar-accent: oklch(0.32 0.04 60);
-  --sidebar-accent-foreground: oklch(0.94 0.03 80);
-  --sidebar-border: oklch(0.45 0.08 55);
-  --sidebar-ring: oklch(0.62 0.13 75);
+  --background: oklch(0.16 0.018 55);          /* deep stone */
+  --foreground: oklch(0.92 0.04 80);           /* candlelit cream */
+  --card: oklch(0.22 0.022 55);                /* aged leather */
+  --card-foreground: oklch(0.92 0.04 80);
+  --popover: oklch(0.22 0.022 55);
+  --popover-foreground: oklch(0.92 0.04 80);
+  --primary: oklch(0.50 0.16 28);              /* glowing burgundy */
+  --primary-foreground: oklch(0.96 0.04 82);
+  --secondary: oklch(0.28 0.03 55);            /* slate inset */
+  --secondary-foreground: oklch(0.92 0.04 80);
+  --muted: oklch(0.25 0.025 55);
+  --muted-foreground: oklch(0.70 0.05 75);     /* faded gold */
+  --accent: oklch(0.55 0.12 80);               /* burnished gold */
+  --accent-foreground: oklch(0.16 0.018 55);
+  --destructive: oklch(0.58 0.20 28);
+  --border: oklch(0.55 0.12 75);               /* gold trim */
+  --input: oklch(0.28 0.03 55);
+  --ring: oklch(0.65 0.14 80);
+  --chart-1: oklch(0.55 0.18 28);
+  --chart-2: oklch(0.65 0.14 80);
+  --chart-3: oklch(0.55 0.14 145);
+  --chart-4: oklch(0.55 0.12 250);
+  --chart-5: oklch(0.45 0.06 50);
+  --sidebar: oklch(0.20 0.022 55);
+  --sidebar-foreground: oklch(0.92 0.04 80);
+  --sidebar-primary: oklch(0.50 0.16 28);
+  --sidebar-primary-foreground: oklch(0.96 0.04 82);
+  --sidebar-accent: oklch(0.28 0.03 55);
+  --sidebar-accent-foreground: oklch(0.92 0.04 80);
+  --sidebar-border: oklch(0.55 0.12 75);
+  --sidebar-ring: oklch(0.65 0.14 80);
+}
+
+/* Dark theme tweaks: replace the parchment noise overlay with a stone
+ * texture so the body doesn't read as cream-tinted in dark mode. */
+.dark body {
+  background-image:
+    radial-gradient(at 20% 10%, oklch(0.22 0.03 55 / 0.6), transparent 60%),
+    radial-gradient(at 85% 80%, oklch(0.12 0.02 55 / 0.4), transparent 55%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92  0 0 0 0 0.80  0 0 0 0 0.50  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-blend-mode: screen, multiply, normal;
+}
+
+/* Dark mode panel gets a bronze inner highlight + dark trim. */
+.dark .fantasy-panel {
+  box-shadow:
+    inset 0 0 0 1px oklch(0.32 0.04 55),
+    inset 0 0 0 2px var(--border),
+    inset 0 0 0 3px oklch(0.45 0.10 70),
+    inset 0 0 0 4px var(--card),
+    0 1px 0 oklch(0 0 0 / 0.4);
+}
+.dark .fantasy-button {
+  background: linear-gradient(
+    180deg,
+    oklch(0.32 0.03 55) 0%,
+    oklch(0.24 0.025 55) 100%
+  );
+  color: var(--foreground);
+  box-shadow:
+    inset 0 1px 0 oklch(0.45 0.06 60),
+    inset 0 -1px 0 oklch(0.10 0.02 55),
+    0 1px 0 oklch(0 0 0 / 0.5);
+}
+.dark .fantasy-button[data-variant="primary"] {
+  background: linear-gradient(
+    180deg,
+    oklch(0.55 0.17 28) 0%,
+    oklch(0.38 0.14 25) 100%
+  );
 }
 
 @layer base {
@@ -210,6 +254,108 @@
   line-height: 0.85;
   padding: 0.05em 0.12em 0 0;
   color: var(--primary);
+}
+
+/* ── Auto-cascade: every Card gets the illuminated trim ───────────── */
+[data-slot="card"] {
+  background-color: var(--card);
+  /* layered insets = inner highlight + dark trim + gold band */
+  box-shadow:
+    inset 0 0 0 1px oklch(0.97 0.04 84),
+    inset 0 0 0 2px var(--border),
+    inset 0 0 0 3px oklch(0.65 0.11 75),
+    inset 0 0 0 4px var(--card),
+    0 1px 0 oklch(0.55 0.08 55 / 0.35);
+}
+.dark [data-slot="card"] {
+  box-shadow:
+    inset 0 0 0 1px oklch(0.32 0.04 55),
+    inset 0 0 0 2px var(--border),
+    inset 0 0 0 3px oklch(0.45 0.10 70),
+    inset 0 0 0 4px var(--card),
+    0 1px 0 oklch(0 0 0 / 0.4);
+}
+[data-slot="card-title"] {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: 0.02em;
+}
+
+/* ── Auto-cascade: every Button gets the chunky engraved finish ───── */
+[data-slot="button"] {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  border-radius: 2px;
+}
+[data-slot="button"][data-variant="default"] {
+  background: linear-gradient(
+    180deg,
+    oklch(0.50 0.16 28) 0%,
+    oklch(0.36 0.14 25) 100%
+  );
+  color: var(--primary-foreground);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.22),
+    inset 0 -1px 0 oklch(0 0 0 / 0.30),
+    0 1px 0 oklch(0 0 0 / 0.20);
+  text-shadow: 0 1px 0 oklch(0.20 0.10 25);
+}
+[data-slot="button"][data-variant="outline"],
+[data-slot="button"][data-variant="secondary"],
+[data-slot="button"][data-variant="ghost"] {
+  background: linear-gradient(
+    180deg,
+    oklch(0.92 0.04 82) 0%,
+    oklch(0.85 0.06 75) 100%
+  );
+  color: var(--foreground);
+  box-shadow:
+    inset 0 1px 0 oklch(0.98 0.03 85),
+    inset 0 -1px 0 oklch(0.55 0.08 55 / 0.6),
+    0 1px 0 oklch(0.4 0.06 50 / 0.4);
+}
+.dark [data-slot="button"][data-variant="outline"],
+.dark [data-slot="button"][data-variant="secondary"],
+.dark [data-slot="button"][data-variant="ghost"] {
+  background: linear-gradient(
+    180deg,
+    oklch(0.32 0.03 55) 0%,
+    oklch(0.24 0.025 55) 100%
+  );
+  color: var(--foreground);
+  box-shadow:
+    inset 0 1px 0 oklch(0.45 0.06 60),
+    inset 0 -1px 0 oklch(0.10 0.02 55),
+    0 1px 0 oklch(0 0 0 / 0.5);
+}
+[data-slot="button"][data-variant="destructive"] {
+  background: linear-gradient(
+    180deg,
+    oklch(0.48 0.20 28) 0%,
+    oklch(0.32 0.16 25) 100%
+  );
+  color: oklch(0.96 0.04 82);
+}
+/* Pill-shaped chips (used by filter buttons) keep their rounded look. */
+[data-slot="button"][class*="rounded-full"],
+[class*="rounded-full"][role="button"] {
+  border-radius: 9999px;
+}
+
+/* Inputs pick up parchment styling. */
+[data-slot="input"],
+input[type="text"]:not([role="combobox"]),
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  background-color: var(--input);
+  border-color: var(--border);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 oklch(0 0 0 / 0.06);
 }
 
 /* Decorative section divider — gold center diamond with hairlines. */

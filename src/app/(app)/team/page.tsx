@@ -15,7 +15,7 @@ import {
 } from "@/components/team-member-work";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Team" };
+export const metadata = { title: "Hall of Heroes" };
 
 const PRIORITY_RANK: Record<string, number> = {
   URGENT: 0,
@@ -118,7 +118,7 @@ export default async function TeamPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Team</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Hall of Heroes</h1>
         <p className="text-sm text-muted-foreground">
           Current workload by estimate points across all open, assigned tasks.
         </p>

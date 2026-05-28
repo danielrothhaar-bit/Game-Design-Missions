@@ -81,10 +81,10 @@ export function SidebarBody({
 
       <nav className="flex-1 overflow-y-auto px-2 py-2">
         <div className="mb-3">
-          <SidebarLink href="/my-work" icon="briefcase" label="My Work" exact />
+          <SidebarLink href="/my-work" icon="briefcase" label="My Quests" exact />
           <SidebarLink href="/dashboard" icon="dashboard" label="Dashboard" />
           <SidebarLink href="/games" icon="grid" label="All Games" exact />
-          <SidebarLink href="/team" icon="users" label="Team" exact />
+          <SidebarLink href="/team" icon="users" label="Hall of Heroes" exact />
           {isAdmin ? (
             <SidebarLink href="/admin" icon="shield" label="Admin" />
           ) : null}

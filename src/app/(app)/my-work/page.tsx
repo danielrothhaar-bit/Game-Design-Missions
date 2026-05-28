@@ -11,7 +11,7 @@ import { Flame, Trophy } from "lucide-react";
 import { SkillRadar } from "@/components/skill-radar";
 import { MyWorkTabs } from "@/components/my-work-tabs";
 
-export const metadata = { title: "My Work" };
+export const metadata = { title: "My Quests" };
 
 export default async function MyWorkPage() {
   const userId = await effectiveUserId();
