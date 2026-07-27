@@ -7,17 +7,21 @@
 --
 -- Safe to re-run (all statements are guarded).
 
+-- Constraint names MUST match Drizzle's generated names (table + JS property +
+-- "_unique") so `drizzle-kit push` recognises them as already present and does
+-- not try to re-add them.
+
 -- 1. Idempotent link from a Quests task back to its Design Suite action.
 ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_ref" text;
 DO $$ BEGIN
-  ALTER TABLE "task" ADD CONSTRAINT "task_design_suite_ref_unique" UNIQUE ("design_suite_ref");
+  ALTER TABLE "task" ADD CONSTRAINT "task_designSuiteRef_unique" UNIQUE ("design_suite_ref");
 EXCEPTION WHEN duplicate_table THEN NULL; WHEN duplicate_object THEN NULL;
 END $$;
 
 -- 2. Link a Quests game/project to a Design Suite game.
 ALTER TABLE "game" ADD COLUMN IF NOT EXISTS "design_suite_game_id" text;
 DO $$ BEGIN
-  ALTER TABLE "game" ADD CONSTRAINT "game_design_suite_game_id_unique" UNIQUE ("design_suite_game_id");
+  ALTER TABLE "game" ADD CONSTRAINT "game_designSuiteGameId_unique" UNIQUE ("design_suite_game_id");
 EXCEPTION WHEN duplicate_table THEN NULL; WHEN duplicate_object THEN NULL;
 END $$;
 
