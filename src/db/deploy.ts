@@ -1,9 +1,11 @@
 import { execSync } from "node:child_process";
 import { sql } from "drizzle-orm";
 import { db } from "./index";
+import { appConfig } from "./schema";
 import { seedGamesCatalog } from "./seed-games";
 import { seedDefaults } from "./seed-defaults";
 import { seedPhaseTemplates } from "./phase-templates";
+import { backfillLogoColors } from "./backfill-logo-colors";
 import { snapshotData } from "./snapshot";
 
 /**
@@ -60,6 +62,23 @@ async function main() {
   if (process.env.SEED_GAMES_ON_DEPLOY === "true") {
     console.log("→ SEED_GAMES_ON_DEPLOY=true — seeding game catalog");
     await seedGamesCatalog();
+  }
+
+  // One-time: derive cover colors from already-uploaded logos. Guarded by a
+  // flag so it runs on exactly one deploy and never overwrites colors again.
+  const cfg = await db.query.appConfig.findFirst();
+  if (!cfg?.logoColorsBackfilledAt) {
+    console.log("→ backfilling game cover colors from uploaded logos");
+    const n = await backfillLogoColors();
+    console.log(`✓ derived color for ${n} game(s) from their logo`);
+    const now = new Date();
+    await db
+      .insert(appConfig)
+      .values({ id: "global", logoColorsBackfilledAt: now })
+      .onConflictDoUpdate({
+        target: appConfig.id,
+        set: { logoColorsBackfilledAt: now },
+      });
   }
 
   process.exit(0);

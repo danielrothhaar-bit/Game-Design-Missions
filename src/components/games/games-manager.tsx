@@ -30,6 +30,7 @@ import {
   updateGameCover,
 } from "@/server/actions/games";
 import { cn } from "@/lib/utils";
+import { dominantColorFromRgba } from "@/lib/color";
 
 type Status = { slug: string; label: string };
 export type ManagedGame = {
@@ -64,44 +65,9 @@ async function processLogo(
   if (!ctx) throw new Error("Canvas unsupported");
   ctx.drawImage(bitmap, 0, 0, w, h);
   bitmap.close?.();
-  const color = dominantColor(ctx.getImageData(0, 0, w, h).data);
+  const color = dominantColorFromRgba(ctx.getImageData(0, 0, w, h).data);
   // webp where supported; browsers fall back to png automatically.
   return { dataUrl: canvas.toDataURL("image/webp", 0.9), color };
-}
-
-/** Most prominent vivid (non-black/white/transparent) color in RGBA pixels. */
-function dominantColor(data: Uint8ClampedArray): string | null {
-  const buckets = new Map<string, { count: number; r: number; g: number; b: number }>();
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const a = data[i + 3];
-    if (a < 128) continue; // transparent
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    if (max < 45) continue; // near-black
-    if (min > 210) continue; // near-white
-    if (max - min < 18 && max > 60 && max < 200) continue; // dull gray
-    // Quantize to 5 bits per channel so similar shades group together.
-    const key = `${r >> 3}-${g >> 3}-${b >> 3}`;
-    const e = buckets.get(key) ?? { count: 0, r: 0, g: 0, b: 0 };
-    e.count++;
-    e.r += r;
-    e.g += g;
-    e.b += b;
-    buckets.set(key, e);
-  }
-  let best: { count: number; r: number; g: number; b: number } | null = null;
-  for (const e of buckets.values()) {
-    if (!best || e.count > best.count) best = e;
-  }
-  if (!best) return null;
-  const c = (v: number) =>
-    Math.round(v / best!.count)
-      .toString(16)
-      .padStart(2, "0");
-  return `#${c(best.r)}${c(best.g)}${c(best.b)}`;
 }
 
 export function GamesManager({

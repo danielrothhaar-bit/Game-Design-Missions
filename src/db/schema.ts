@@ -677,6 +677,9 @@ export const appConfig = pgTable("app_config", {
   priorityMultMedium: integer().notNull().default(100),
   priorityMultHigh: integer().notNull().default(115),
   priorityMultUrgent: integer().notNull().default(130),
+  // Set once the deploy step has derived cover colors from existing logos,
+  // so the backfill never re-runs (and never clobbers manual color edits).
+  logoColorsBackfilledAt: timestamp({ mode: "date", withTimezone: true }),
 });
 
 /* ────────────────────── relations ─────────────────────── */
