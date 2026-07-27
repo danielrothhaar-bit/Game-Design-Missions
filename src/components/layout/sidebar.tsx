@@ -16,6 +16,7 @@ type Game = {
   slug: string;
   name: string;
   coverColor: string;
+  coverImage: string | null;
   statusSlug: string;
   division: string;
   isLead: boolean;
@@ -23,18 +24,11 @@ type Game = {
 
 type StatusOption = { slug: string; label: string };
 type DivisionOption = { slug: string; label: string };
-type Sidequest = {
-  slug: string;
-  name: string;
-  coverColor: string;
-  statusSlug: string;
-};
 
 export type SidebarProps = {
   games: Game[];
   statuses: StatusOption[];
   divisions: DivisionOption[];
-  sidequests: Sidequest[];
   user: {
     name: string | null;
     email: string;
@@ -58,7 +52,6 @@ export function SidebarBody({
   games,
   statuses,
   divisions,
-  sidequests,
   user,
 }: SidebarProps) {
   const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
@@ -95,8 +88,6 @@ export function SidebarBody({
             games={games.filter((g) => g.division === div.slug)}
           />
         ))}
-
-        <SidequestSection sidequests={sidequests} />
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
@@ -237,64 +228,6 @@ function DivisionSection({
   );
 }
 
-function SidequestSection({ sidequests }: { sidequests: Sidequest[] }) {
-  const [showClosed, setShowClosed] = useState(false);
-  const open = sidequests.filter((s) => s.statusSlug !== "CLOSED");
-  const closed = sidequests.filter((s) => s.statusSlug === "CLOSED");
-  const visible = showClosed ? sidequests : open;
-
-  return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between px-2.5 pb-1.5">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Sidequests
-        </span>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Link
-                href="/sidequests/new"
-                className="grid size-6 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                aria-label="New sidequest"
-              >
-                <Plus className="size-4" />
-              </Link>
-            }
-          />
-          <TooltipContent>New sidequest</TooltipContent>
-        </Tooltip>
-      </div>
-
-      {visible.length === 0 ? (
-        <p className="px-2.5 py-1 text-sm text-muted-foreground">
-          No sidequests.
-        </p>
-      ) : (
-        <div className="space-y-0.5 pl-1.5">
-          {visible.map((s) => (
-            <SidebarGameLink
-              key={s.slug}
-              slug={s.slug}
-              name={s.name}
-              color={s.coverColor}
-            />
-          ))}
-        </div>
-      )}
-
-      {closed.length > 0 ? (
-        <button
-          type="button"
-          onClick={() => setShowClosed((v) => !v)}
-          className="mt-1 px-2.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          {showClosed ? "Hide" : "Show"} closed quests ({closed.length})
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
 function GameGroup({
   label,
   games,
@@ -329,6 +262,7 @@ function GameGroup({
                 slug={g.slug}
                 name={g.name}
                 color={g.coverColor}
+                coverImage={g.coverImage}
                 isLead={g.isLead}
               />
             ))}

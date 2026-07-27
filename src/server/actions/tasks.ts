@@ -125,7 +125,7 @@ export async function updateTaskFields(input: z.input<typeof UpdateInput>) {
 
   revalidatePath(`/games/${current.game.slug}`);
   revalidatePath("/my-work");
-  revalidatePath("/dashboard");
+  revalidatePath("/portfolio");
   return { ok: true };
 }
 

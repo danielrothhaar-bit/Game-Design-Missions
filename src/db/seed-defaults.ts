@@ -18,6 +18,7 @@ export const DEFAULT_DIVISIONS: Array<{
   { slug: "TEG_GAMES", label: "TEG Games", color: "#7c3aed" },
   { slug: "GBGS", label: "GBGS", color: "#0ea5e9" },
   { slug: "ADVENTURE_MINING", label: "Adventure Mining", color: "#f59e0b" },
+  { slug: "SIDEQUESTS", label: "Sidequests", color: "#0ea5e9" },
 ];
 
 export const DEFAULT_GAME_STATUSES: Array<{

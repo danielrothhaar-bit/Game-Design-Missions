@@ -97,10 +97,6 @@ export default async function TeamPage() {
     }))
     .sort((a, b) => b.points - a.points);
 
-  const totalPoints = data.reduce((s, d) => s + d.points, 0);
-  const active = data.filter((d) => d.points > 0).length;
-  const avg = active > 0 ? Math.round(totalPoints / active) : 0;
-
   // Per-person work viewer: people with open work first, then the rest.
   const members: TeamMember[] = users
     .map((u) => {
@@ -123,15 +119,6 @@ export default async function TeamPage() {
           Current workload by estimate points across all open, assigned tasks.
         </p>
       </header>
-
-      {/* Condensed overview: inline stats + chart and breakdown side by side */}
-      <Card>
-        <CardContent className="flex flex-wrap items-center gap-x-8 gap-y-3 p-4">
-          <InlineStat label="Open points (total)" value={totalPoints} />
-          <InlineStat label="People with work" value={active} />
-          <InlineStat label="Avg points / person" value={avg} />
-        </CardContent>
-      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -182,13 +169,3 @@ export default async function TeamPage() {
   );
 }
 
-function InlineStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <span className="text-2xl font-semibold">{value}</span>
-    </div>
-  );
-}

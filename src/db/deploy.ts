@@ -42,6 +42,18 @@ async function main() {
 
   // Reference data (teams + skills) is always kept up to date — idempotent.
   await seedDefaults();
+
+  // One-time, idempotent: fold legacy sidequests into the Sidequests division
+  // so they're managed exactly like every other project. Only touches rows
+  // still marked with the old kind, so re-running is a no-op.
+  const folded = await db.execute(
+    sql`UPDATE "game" SET kind = 'GAME', division = 'SIDEQUESTS' WHERE kind = 'SIDEQUEST'`,
+  );
+  const foldedCount =
+    (folded as { rowCount?: number }).rowCount ?? 0;
+  if (foldedCount > 0) {
+    console.log(`✓ folded ${foldedCount} sidequest(s) into the Sidequests division`);
+  }
   // Phase templates seed once; admin edits afterward are preserved.
   await seedPhaseTemplates();
 

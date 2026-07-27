@@ -62,17 +62,22 @@ export function SidebarGameLink({
   slug,
   name,
   color,
+  coverImage,
   isLead = false,
 }: {
   slug: string;
   name: string;
   color: string;
+  coverImage?: string | null;
   isLead?: boolean;
 }) {
   const pathname = usePathname();
   const [hasShield, setHasShield] = useState(true);
   const href = `/games/${slug}`;
   const active = pathname.startsWith(href);
+  // Prefer an uploaded icon (data URL in the DB); otherwise fall back to a
+  // per-game art file, then a plain color dot.
+  const iconSrc = coverImage || `/games/${slug}.webp`;
   return (
     <Link
       href={href}
@@ -88,9 +93,9 @@ export function SidebarGameLink({
       {hasShield ? (
         // eslint-disable-next-line @next/next/no-img-element -- per-game art
         <img
-          src={`/games/${slug}.webp`}
+          src={iconSrc}
           alt=""
-          className="size-6 shrink-0 object-contain"
+          className="size-6 shrink-0 rounded object-contain"
           onError={() => setHasShield(false)}
         />
       ) : (

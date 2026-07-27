@@ -6,7 +6,6 @@ import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import {
   listGames,
   listGameStatuses,
-  listSidequests,
   listDivisions,
   hiddenDivisionsForUser,
 } from "@/lib/queries";
@@ -24,12 +23,11 @@ export default async function AppLayout({
   const { effective: user, impersonating } = await resolveUsers();
   if (!user) redirect("/login");
 
-  const [games, xpConfig, statuses, sidequests, allDivisions, hiddenDivs] =
+  const [games, xpConfig, statuses, allDivisions, hiddenDivs] =
     await Promise.all([
       listGames(),
       getXpConfig(),
       listGameStatuses(),
-      listSidequests(),
       listDivisions(),
       hiddenDivisionsForUser(user.id),
     ]);
@@ -45,15 +43,10 @@ export default async function AppLayout({
       slug: g.slug,
       name: g.name,
       coverColor: g.coverColor,
+      coverImage: g.coverImage,
       statusSlug: g.statusSlug ?? g.status,
       division: g.division,
       isLead: g.leadUserId === user.id,
-    })),
-    sidequests: sidequests.map((s) => ({
-      slug: s.slug,
-      name: s.name,
-      coverColor: s.coverColor,
-      statusSlug: s.statusSlug ?? "OPEN",
     })),
     user: {
       name: user.name,

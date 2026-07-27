@@ -1,17 +1,20 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { effectiveUserId } from "@/lib/impersonation";
 import { progressInLevel, titleForLevel } from "@/lib/xp";
 import { getXpConfig } from "@/lib/config";
-import { listSkills, listGames, listSidequests } from "@/lib/queries";
+import { listGames, listGameStatuses } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Flame, Trophy } from "lucide-react";
-import { SkillRadar } from "@/components/skill-radar";
+import { AlertTriangle, Ban, Flame, Trophy } from "lucide-react";
+import { GameShield } from "@/components/games/game-shield";
 import { MyWorkTabs } from "@/components/my-work-tabs";
 
 export const metadata = { title: "My Quests" };
+
+const DAY = 1000 * 60 * 60 * 24;
 
 export default async function MyWorkPage() {
   const userId = await effectiveUserId();
@@ -24,12 +27,10 @@ export default async function MyWorkPage() {
     assignments,
     streak,
     badges,
-    proficiencyRows,
-    allSkills,
     unassignedRows,
     dailyPlanRows,
     gamesList,
-    sidequestList,
+    statuses,
   ] = await Promise.all([
       db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) }),
       db.query.taskAssignees.findMany({
@@ -48,10 +49,6 @@ export default async function MyWorkPage() {
         where: (b, { eq }) => eq(b.userId, userId),
         with: { badge: true },
       }),
-      db.query.userSkills.findMany({
-        where: (us, { eq }) => eq(us.userId, userId),
-      }),
-      listSkills(),
       db.query.tasks.findMany({
         where: (t, { ne }) => ne(t.status, "DONE"),
         with: {
@@ -64,23 +61,16 @@ export default async function MyWorkPage() {
           and(eq(dp.userId, userId), eq(dp.planDate, today)),
       }),
       listGames(),
-      listSidequests(),
+      listGameStatuses(),
     ]);
 
   if (!me) redirect("/login");
 
   const planSet = new Set(dailyPlanRows.map((d) => d.taskId));
-  const projectOptions = [...gamesList, ...sidequestList]
+  const projectOptions = [...gamesList]
     .map((g) => ({ id: g.id, name: g.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const skillNameById = new Map(allSkills.map((s) => [s.id, s.name]));
-  const proficiency = proficiencyRows
-    .filter((r) => r.level > 0)
-    .map((r) => ({
-      skill: skillNameById.get(r.skillId) ?? "?",
-      level: r.level,
-    }));
   const cfg = await getXpConfig();
   const p = progressInLevel(me.totalXp, cfg);
 
@@ -110,8 +100,53 @@ export default async function MyWorkPage() {
     (t) =>
       t.dueDate &&
       t.dueDate.getTime() >= now &&
-      t.dueDate.getTime() < now + 1000 * 60 * 60 * 24 * 3,
+      t.dueDate.getTime() < now + DAY * 3,
   ).length;
+
+  // ── Games this user leads ───────────────────────────────────
+  const statusBy = new Map(statuses.map((s) => [s.slug, s]));
+  const leadGames = gamesList.filter((g) => g.leadUserId === userId);
+  const leadGameIds = leadGames.map((g) => g.id);
+  const leadTasks = leadGameIds.length
+    ? await db.query.tasks.findMany({
+        where: (t, { inArray }) => inArray(t.gameId, leadGameIds),
+        columns: { gameId: true, status: true, dueDate: true },
+      })
+    : [];
+  const tasksByGame = new Map<string, typeof leadTasks>();
+  for (const t of leadTasks) {
+    const arr = tasksByGame.get(t.gameId) ?? [];
+    arr.push(t);
+    tasksByGame.set(t.gameId, arr);
+  }
+  const leadSummaries = leadGames.map((g) => {
+    const ts = tasksByGame.get(g.id) ?? [];
+    const total = ts.length;
+    const done = ts.filter((t) => t.status === "DONE").length;
+    const blocked = ts.filter((t) => t.status === "BLOCKED").length;
+    const overdueCount = ts.filter(
+      (t) => t.status !== "DONE" && t.dueDate && t.dueDate.getTime() < now,
+    ).length;
+    const status = statusBy.get(g.statusSlug ?? g.status);
+    const daysToLaunch = g.launchDate
+      ? Math.round((g.launchDate.getTime() - now) / DAY)
+      : null;
+    return {
+      id: g.id,
+      slug: g.slug,
+      name: g.name,
+      coverColor: g.coverColor,
+      coverImage: g.coverImage,
+      statusLabel: status?.label ?? g.statusSlug ?? g.status,
+      statusColor: status?.color ?? "#6b7280",
+      total,
+      done,
+      blocked,
+      overdue: overdueCount,
+      pct: total === 0 ? 0 : Math.round((done / total) * 100),
+      daysToLaunch,
+    };
+  });
 
   // ── Tab data ────────────────────────────────────────────────
   const openData = tasks.map((t) => ({
@@ -291,15 +326,22 @@ export default async function MyWorkPage() {
         </CardContent>
       </Card>
 
-      {proficiency.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Skill proficiency</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SkillRadar data={proficiency} height={240} />
-          </CardContent>
-        </Card>
+      {leadSummaries.length > 0 ? (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">
+              Projects you lead
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Where each of your projects stands right now.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {leadSummaries.map((g) => (
+              <LeadGameCard key={g.id} g={g} />
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <MyWorkTabs
@@ -310,6 +352,92 @@ export default async function MyWorkPage() {
         projects={projectOptions}
       />
     </div>
+  );
+}
+
+type LeadSummary = {
+  slug: string;
+  name: string;
+  coverColor: string;
+  coverImage: string | null;
+  statusLabel: string;
+  statusColor: string;
+  total: number;
+  done: number;
+  blocked: number;
+  overdue: number;
+  pct: number;
+  daysToLaunch: number | null;
+};
+
+function LeadGameCard({ g }: { g: LeadSummary }) {
+  return (
+    <Link href={`/games/${g.slug}`} className="group block">
+      <Card className="relative overflow-hidden transition-colors hover:border-foreground/25">
+        <span
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-1"
+          style={{ backgroundColor: g.coverColor }}
+        />
+        <CardContent className="space-y-3 p-4 pl-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <GameShield slug={g.slug} coverImage={g.coverImage} size={36} />
+              <h3 className="truncate text-base font-bold leading-tight">
+                {g.name}
+              </h3>
+            </div>
+            <span
+              className="shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold"
+              style={{
+                backgroundColor: `${g.statusColor}22`,
+                color: g.statusColor,
+                borderColor: `${g.statusColor}55`,
+              }}
+            >
+              {g.statusLabel}
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {g.done} / {g.total} tasks done
+              </span>
+              <span className="font-bold tabular-nums">{g.pct}%</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${g.pct}%`, backgroundColor: g.coverColor }}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+            {g.daysToLaunch !== null ? (
+              <span className="text-muted-foreground">
+                {g.daysToLaunch >= 0
+                  ? `Launches in ${g.daysToLaunch}d`
+                  : `Launched ${-g.daysToLaunch}d ago`}
+              </span>
+            ) : null}
+            {g.blocked > 0 ? (
+              <span className="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                <Ban className="size-3.5" />
+                {g.blocked} blocked
+              </span>
+            ) : null}
+            {g.overdue > 0 ? (
+              <span className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+                <AlertTriangle className="size-3.5" />
+                {g.overdue} overdue
+              </span>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

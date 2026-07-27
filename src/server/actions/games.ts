@@ -45,7 +45,7 @@ export async function updateGame(input: z.input<typeof UpdateInput>) {
 
   revalidatePath(`/games/${existing.slug}`);
   revalidatePath("/games");
-  revalidatePath("/dashboard");
+  revalidatePath("/portfolio");
   revalidatePath("/", "layout"); // refresh sidebar (lead highlight, etc.)
   return { ok: true };
 }
@@ -127,54 +127,69 @@ export async function createGame(input: z.input<typeof CreateGameInput>) {
   });
 
   revalidatePath("/games");
-  revalidatePath("/dashboard");
+  revalidatePath("/portfolio");
   revalidatePath("/", "layout");
   return { slug: game.slug };
 }
 
-const CreateSidequestInput = z.object({
-  name: z.string().min(1).max(120),
-  description: z.string().max(2000).optional(),
-  coverColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#0ea5e9"),
+/**
+ * Set (or clear) a project's uploaded icon. The image arrives as a data URL
+ * from the client (already resized) and is stored on the game row, so it
+ * survives on Railway's ephemeral filesystem the way a /public file wouldn't.
+ */
+const CoverInput = z.object({
+  id: z.string(),
+  // A resized image data URL, or null to clear it.
+  coverImage: z
+    .union([
+      z.string().startsWith("data:image/").max(1_500_000),
+      z.null(),
+    ])
+    .optional(),
 });
 
-export async function createSidequest(
-  input: z.input<typeof CreateSidequestInput>,
-) {
+export async function updateGameCover(input: z.input<typeof CoverInput>) {
+  await requireUser();
+  const { id, coverImage } = CoverInput.parse(input);
+  const existing = await db.query.games.findFirst({ where: eq(games.id, id) });
+  if (!existing) throw new Error("Project not found");
+  await db.update(games).set({ coverImage: coverImage ?? null }).where(eq(games.id, id));
+  revalidatePath("/games");
+  revalidatePath(`/games/${existing.slug}`);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function setGameArchived(id: string, archived: boolean) {
   const userId = await requireUser();
-  const parsed = CreateSidequestInput.parse(input);
-
-  const base = slugify(parsed.name) || "sidequest";
-  let slug = base;
-  for (let i = 2; ; i++) {
-    const clash = await db.query.games.findFirst({
-      where: eq(games.slug, slug),
-    });
-    if (!clash) break;
-    slug = `${base}-${i}`;
-  }
-
-  const [sq] = await db
-    .insert(games)
-    .values({
-      name: parsed.name,
-      slug,
-      kind: "SIDEQUEST",
-      statusSlug: "OPEN",
-      coverColor: parsed.coverColor,
-      description: parsed.description,
-      createdById: userId,
-    })
-    .returning();
-
+  const existing = await db.query.games.findFirst({ where: eq(games.id, id) });
+  if (!existing) throw new Error("Project not found");
+  await db
+    .update(games)
+    .set({ archivedAt: archived ? new Date() : null })
+    .where(eq(games.id, id));
   await db.insert(activities).values({
     entityType: "game",
-    entityId: sq.id,
-    gameId: sq.id,
+    entityId: id,
+    gameId: id,
     actorId: userId,
-    verb: "CREATED",
+    verb: "UPDATED",
+    payload: { archived },
   });
-
+  revalidatePath("/games");
+  revalidatePath("/portfolio");
   revalidatePath("/", "layout");
-  return { slug: sq.slug };
+  return { ok: true };
+}
+
+/** Hard-delete a project and everything under it (phases/tasks cascade). */
+export async function deleteGame(id: string) {
+  await requireUser();
+  const existing = await db.query.games.findFirst({ where: eq(games.id, id) });
+  if (!existing) throw new Error("Project not found");
+  await db.delete(games).where(eq(games.id, id));
+  revalidatePath("/games");
+  revalidatePath("/portfolio");
+  revalidatePath("/", "layout");
+  return { ok: true };
 }

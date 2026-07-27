@@ -1,90 +1,53 @@
 import Link from "next/link";
-import { listGames, listGameStatuses } from "@/lib/queries";
-import { Card, CardContent } from "@/components/ui/card";
-import { GameShield } from "@/components/games/game-shield";
+import { Plus } from "lucide-react";
+import { listAllGames, listGameStatuses, listDivisions } from "@/lib/queries";
+import { Button } from "@/components/ui/button";
+import { GamesManager } from "@/components/games/games-manager";
 
-export const metadata = { title: "All Games" };
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Games" };
 
 export default async function GamesIndexPage() {
-  const [games, statuses] = await Promise.all([
-    listGames(),
+  const [games, statuses, divisions] = await Promise.all([
+    listAllGames(),
     listGameStatuses(),
+    listDivisions(),
   ]);
-  const statusBy = new Map(statuses.map((s) => [s.slug, s]));
-  const statusFor = (g: { statusSlug: string | null; status: string }) =>
-    statusBy.get(g.statusSlug ?? g.status);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <header className="flex items-center justify-between">
+    <div className="mx-auto max-w-5xl space-y-6 p-6">
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Games</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Games</h1>
           <p className="text-sm text-muted-foreground">
-            Every escape room your studio is shaping.
+            Manage every project — set status, upload an icon, archive or
+            delete.
           </p>
         </div>
+        <Button render={<Link href="/games/new" />}>
+          <Plus className="size-4" />
+          New project
+        </Button>
       </header>
 
-      {games.length === 0 ? (
-        <Card>
-          <CardContent className="grid place-items-center gap-3 py-16 text-center">
-            <p className="text-sm text-muted-foreground">
-              No games yet. Spin up your first one.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {games.map((g) => (
-            <Link key={g.id} href={`/games/${g.slug}`}>
-              <Card className="overflow-hidden transition-colors hover:border-foreground/20">
-                <div
-                  className="relative flex h-24 items-center justify-center overflow-hidden"
-                  style={{
-                    background: `linear-gradient(135deg, ${g.coverColor}, ${g.coverColor}66)`,
-                  }}
-                >
-                  <GameShield slug={g.slug} size={88} />
-                </div>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold leading-tight">{g.name}</h3>
-                    {(() => {
-                      const s = statusFor(g);
-                      return (
-                        <span
-                          className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
-                          style={
-                            s
-                              ? {
-                                  backgroundColor: `${s.color}22`,
-                                  color: s.color,
-                                  borderColor: `${s.color}55`,
-                                }
-                              : undefined
-                          }
-                        >
-                          {s?.label ?? g.statusSlug ?? g.status}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                  {g.description ? (
-                    <p className="line-clamp-2 text-sm text-muted-foreground">
-                      {g.description}
-                    </p>
-                  ) : null}
-                  {g.launchDate ? (
-                    <p className="text-xs text-muted-foreground">
-                      Launch · {g.launchDate.toLocaleDateString()}
-                    </p>
-                  ) : null}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+      <GamesManager
+        divisions={divisions.map((d) => ({
+          slug: d.slug,
+          label: d.label,
+          color: d.color,
+        }))}
+        statuses={statuses.map((s) => ({ slug: s.slug, label: s.label }))}
+        games={games.map((g) => ({
+          id: g.id,
+          slug: g.slug,
+          name: g.name,
+          division: g.division,
+          coverColor: g.coverColor,
+          coverImage: g.coverImage,
+          statusSlug: g.statusSlug ?? g.status,
+          archived: g.archivedAt !== null,
+        }))}
+      />
     </div>
   );
 }

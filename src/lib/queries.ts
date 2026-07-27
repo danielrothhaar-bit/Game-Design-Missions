@@ -35,16 +35,17 @@ export async function listSkills(includeArchived = false) {
   });
 }
 
+/** Active (non-archived) projects across every division. */
 export async function listGames() {
   return db.query.games.findMany({
-    where: (g, { ne }) => ne(g.kind, "SIDEQUEST"),
+    where: (g, { isNull }) => isNull(g.archivedAt),
     orderBy: [desc(games.createdAt)],
   });
 }
 
-export async function listSidequests() {
+/** Every project including archived — for the Games management page. */
+export async function listAllGames() {
   return db.query.games.findMany({
-    where: (g, { eq: eqOp }) => eqOp(g.kind, "SIDEQUEST"),
     orderBy: [desc(games.createdAt)],
   });
 }

@@ -10,14 +10,19 @@ import { cn } from "@/lib/utils";
  */
 export function GameShield({
   slug,
+  coverImage,
   size = 40,
   className,
 }: {
   slug: string;
+  /** Uploaded icon (data URL) stored on the game; preferred when present. */
+  coverImage?: string | null;
   size?: number;
   className?: string;
 }) {
-  const candidates = [`/games/${slug}.webp`, `/games/${slug}.png`];
+  const candidates = coverImage
+    ? [coverImage, `/games/${slug}.webp`, `/games/${slug}.png`]
+    : [`/games/${slug}.webp`, `/games/${slug}.png`];
   const [idx, setIdx] = useState(0);
   if (idx >= candidates.length) return null;
   return (

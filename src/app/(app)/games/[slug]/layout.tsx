@@ -4,7 +4,6 @@ import {
   listGameStatuses,
   listUsers,
 } from "@/lib/queries";
-import { SIDEQUEST_STATUSES } from "@/lib/format";
 import {
   GameLaunchDatePicker,
   GameLeadPicker,
@@ -28,10 +27,11 @@ export default async function GameLayout({
   ]);
   if (!game) notFound();
 
-  const isSidequest = game.kind === "SIDEQUEST";
-  const statusOptions = isSidequest
-    ? SIDEQUEST_STATUSES
-    : statuses.map((s) => ({ slug: s.slug, label: s.label, color: s.color }));
+  const statusOptions = statuses.map((s) => ({
+    slug: s.slug,
+    label: s.label,
+    color: s.color,
+  }));
 
   return (
     <div className="flex h-full flex-col">
@@ -41,24 +41,17 @@ export default async function GameLayout({
       />
       <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <GameShield slug={game.slug} size={44} />
+          <GameShield slug={game.slug} coverImage={game.coverImage} size={44} />
           <h1 className="truncate text-lg font-semibold">{game.name}</h1>
-          {isSidequest ? (
-            <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-sky-300">
-              Sidequest
-            </span>
-          ) : null}
           <GameStatusPicker
             gameId={game.id}
             initialSlug={game.statusSlug ?? game.status}
             statuses={statusOptions}
           />
-          {isSidequest ? null : (
-            <GameLaunchDatePicker
-              gameId={game.id}
-              initial={game.launchDate ?? null}
-            />
-          )}
+          <GameLaunchDatePicker
+            gameId={game.id}
+            initial={game.launchDate ?? null}
+          />
           <GameLeadPicker
             gameId={game.id}
             initialLeadId={game.leadUserId ?? null}

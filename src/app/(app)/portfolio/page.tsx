@@ -11,7 +11,7 @@ import { GameShield } from "@/components/games/game-shield";
 import { initials } from "@/lib/format";
 import { AlertTriangle, Ban, CircleCheck, Rocket } from "lucide-react";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Portfolio" };
 
 const DAY = 1000 * 60 * 60 * 24;
 
@@ -114,7 +114,7 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Portfolio</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Portfolio health across every project — what needs attention first.
         </p>
@@ -261,6 +261,7 @@ type Stat = {
     slug: string;
     name: string;
     coverColor: string;
+    coverImage: string | null;
     statusSlug: string | null;
     status: string;
   };
@@ -296,7 +297,12 @@ function ProjectCard({
         <CardContent className="space-y-3 p-4 pl-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
-              <GameShield slug={s.game.slug} size={40} className="mt-0.5" />
+              <GameShield
+                slug={s.game.slug}
+                coverImage={s.game.coverImage}
+                size={40}
+                className="mt-0.5"
+              />
               <div className="min-w-0">
                 <h3 className="truncate text-base font-bold leading-tight">
                   {s.game.name}
