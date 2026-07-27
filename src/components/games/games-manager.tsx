@@ -44,8 +44,15 @@ export type ManagedGame = {
 };
 type Division = { slug: string; label: string; color: string };
 
-/** Read a file, downscale it to a small square-ish icon, return a data URL. */
-async function fileToIconDataUrl(file: File, max = 128): Promise<string> {
+/**
+ * Read a file, downscale it to a small icon, and derive its most prominent
+ * non-black/white color. Returns the data URL + a hex color (or null when the
+ * logo is essentially monochrome, so we can keep the existing color).
+ */
+async function processLogo(
+  file: File,
+  max = 128,
+): Promise<{ dataUrl: string; color: string | null }> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const w = Math.max(1, Math.round(bitmap.width * scale));
@@ -57,8 +64,44 @@ async function fileToIconDataUrl(file: File, max = 128): Promise<string> {
   if (!ctx) throw new Error("Canvas unsupported");
   ctx.drawImage(bitmap, 0, 0, w, h);
   bitmap.close?.();
+  const color = dominantColor(ctx.getImageData(0, 0, w, h).data);
   // webp where supported; browsers fall back to png automatically.
-  return canvas.toDataURL("image/webp", 0.9);
+  return { dataUrl: canvas.toDataURL("image/webp", 0.9), color };
+}
+
+/** Most prominent vivid (non-black/white/transparent) color in RGBA pixels. */
+function dominantColor(data: Uint8ClampedArray): string | null {
+  const buckets = new Map<string, { count: number; r: number; g: number; b: number }>();
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+    if (a < 128) continue; // transparent
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max < 45) continue; // near-black
+    if (min > 210) continue; // near-white
+    if (max - min < 18 && max > 60 && max < 200) continue; // dull gray
+    // Quantize to 5 bits per channel so similar shades group together.
+    const key = `${r >> 3}-${g >> 3}-${b >> 3}`;
+    const e = buckets.get(key) ?? { count: 0, r: 0, g: 0, b: 0 };
+    e.count++;
+    e.r += r;
+    e.g += g;
+    e.b += b;
+    buckets.set(key, e);
+  }
+  let best: { count: number; r: number; g: number; b: number } | null = null;
+  for (const e of buckets.values()) {
+    if (!best || e.count > best.count) best = e;
+  }
+  if (!best) return null;
+  const c = (v: number) =>
+    Math.round(v / best!.count)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${c(best.r)}${c(best.g)}${c(best.b)}`;
 }
 
 export function GamesManager({
@@ -149,9 +192,13 @@ function GameRow({
     }
     setUploading(true);
     try {
-      const dataUrl = await fileToIconDataUrl(file);
-      await updateGameCover({ id: game.id, coverImage: dataUrl });
-      toast.success("Icon updated");
+      const { dataUrl, color } = await processLogo(file);
+      await updateGameCover({
+        id: game.id,
+        coverImage: dataUrl,
+        ...(color ? { coverColor: color } : {}),
+      });
+      toast.success(color ? "Icon and color updated" : "Icon updated");
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not upload icon");

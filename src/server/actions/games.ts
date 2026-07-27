@@ -163,15 +163,25 @@ const CoverInput = z.object({
       z.null(),
     ])
     .optional(),
+  // Optional cover color derived from the uploaded logo (its most prominent
+  // non-black/white color).
+  coverColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
 });
 
 export async function updateGameCover(input: z.input<typeof CoverInput>) {
   await requireUser();
-  const { id, coverImage } = CoverInput.parse(input);
+  const { id, coverImage, coverColor } = CoverInput.parse(input);
   const existing = await db.query.games.findFirst({ where: eq(games.id, id) });
   if (!existing) throw new Error("Project not found");
-  await db.update(games).set({ coverImage: coverImage ?? null }).where(eq(games.id, id));
+  const patch: { coverImage?: string | null; coverColor?: string } = {};
+  if (coverImage !== undefined) patch.coverImage = coverImage ?? null;
+  if (coverColor !== undefined) patch.coverColor = coverColor;
+  await db.update(games).set(patch).where(eq(games.id, id));
   revalidatePath("/games");
+  revalidatePath("/portfolio");
   revalidatePath(`/games/${existing.slug}`);
   revalidatePath("/", "layout");
   return { ok: true };

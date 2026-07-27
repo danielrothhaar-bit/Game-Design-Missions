@@ -1,14 +1,11 @@
-import Link from "next/link";
 import { db } from "@/db";
 import {
   listGames,
   listGameStatuses,
   listDivisions,
-  listUsers,
 } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
-import { GameShield } from "@/components/games/game-shield";
-import { initials } from "@/lib/format";
+import { GameModule } from "@/components/games/game-module";
 import { AlertTriangle, Ban, CircleCheck, Rocket } from "lucide-react";
 
 export const metadata = { title: "Portfolio" };
@@ -16,15 +13,13 @@ export const metadata = { title: "Portfolio" };
 const DAY = 1000 * 60 * 60 * 24;
 
 export default async function DashboardPage() {
-  const [games, statuses, divisions, users] = await Promise.all([
+  const [games, statuses, divisions] = await Promise.all([
     listGames(),
     listGameStatuses(),
     listDivisions(),
-    listUsers(),
   ]);
   const statusOrder = new Map(statuses.map((s, i) => [s.slug, i]));
   const statusBy = new Map(statuses.map((s) => [s.slug, s]));
-  const userById = new Map(users.map((u) => [u.id, u]));
   const statusFor = (g: { statusSlug: string | null; status: string }) =>
     statusBy.get(g.statusSlug ?? g.status);
 
@@ -46,12 +41,19 @@ export default async function DashboardPage() {
     const overdue = tasks.filter(
       (t) => t.status !== "DONE" && t.dueDate && t.dueDate.getTime() < now,
     ).length;
+    const dueSoon = tasks.filter(
+      (t) =>
+        t.status !== "DONE" &&
+        t.dueDate &&
+        t.dueDate.getTime() >= now &&
+        t.dueDate.getTime() <= now + 3 * DAY,
+    ).length;
     const open = total - done;
+    const future = open - overdue - dueSoon;
     const pct = total === 0 ? 0 : Math.round((done / total) * 100);
     const daysToLaunch = g.launchDate
       ? Math.round((g.launchDate.getTime() - now) / DAY)
       : null;
-    const lead = g.leadUserId ? userById.get(g.leadUserId) : undefined;
     return {
       game: g,
       total,
@@ -59,9 +61,10 @@ export default async function DashboardPage() {
       open,
       blocked,
       overdue,
+      dueSoon,
+      future,
       pct,
       daysToLaunch,
-      lead,
       attention: blocked + overdue,
     };
   });
@@ -209,10 +212,19 @@ export default async function DashboardPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {items.map((s) => (
-                <ProjectCard
+                <GameModule
                   key={s.game.id}
-                  stat={s}
-                  status={statusFor(s.game)}
+                  slug={s.game.slug}
+                  name={s.game.name}
+                  coverColor={s.game.coverColor}
+                  coverImage={s.game.coverImage}
+                  statusLabel={statusFor(s.game)?.label}
+                  counts={{
+                    overdue: s.overdue,
+                    dueSoon: s.dueSoon,
+                    future: s.future,
+                  }}
+                  daysToLaunch={s.daysToLaunch}
                 />
               ))}
             </div>
@@ -255,158 +267,3 @@ function Kpi({
   );
 }
 
-type Stat = {
-  game: {
-    id: string;
-    slug: string;
-    name: string;
-    coverColor: string;
-    coverImage: string | null;
-    statusSlug: string | null;
-    status: string;
-  };
-  total: number;
-  done: number;
-  open: number;
-  blocked: number;
-  overdue: number;
-  pct: number;
-  daysToLaunch: number | null;
-  lead?: { name: string | null; email: string } | undefined;
-  attention: number;
-};
-
-function ProjectCard({
-  stat,
-  status,
-}: {
-  stat: Stat;
-  status?: { label: string; color: string };
-}) {
-  const s = stat;
-  const launch = launchLabel(s.daysToLaunch);
-  return (
-    <Link href={`/games/${s.game.slug}`} className="group block">
-      <Card className="relative overflow-hidden transition-colors hover:border-foreground/25">
-        {/* left accent in the project's cover color */}
-        <span
-          aria-hidden
-          className="absolute inset-y-0 left-0 w-1"
-          style={{ backgroundColor: s.game.coverColor }}
-        />
-        <CardContent className="space-y-3 p-4 pl-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-start gap-3">
-              <GameShield
-                slug={s.game.slug}
-                coverImage={s.game.coverImage}
-                size={40}
-                className="mt-0.5"
-              />
-              <div className="min-w-0">
-                <h3 className="truncate text-base font-bold leading-tight">
-                  {s.game.name}
-                </h3>
-                {s.lead ? (
-                  <span className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <span className="grid size-4 place-items-center rounded-full bg-secondary text-xs font-bold">
-                      {initials(s.lead.name ?? s.lead.email)}
-                    </span>
-                    {(s.lead.name ?? s.lead.email).split(" ")[0]}
-                  </span>
-                ) : (
-                  <span className="mt-1 block text-sm text-muted-foreground">
-                    No lead
-                  </span>
-                )}
-              </div>
-            </div>
-            {status ? (
-              <span
-                className="shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold"
-                style={{
-                  backgroundColor: `${status.color}22`,
-                  color: status.color,
-                  borderColor: `${status.color}55`,
-                }}
-              >
-                {status.label}
-              </span>
-            ) : null}
-          </div>
-
-          {/* progress */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {s.done} / {s.total} tasks done
-              </span>
-              <span className="font-bold tabular-nums">{s.pct}%</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${s.pct}%`,
-                  backgroundColor: s.game.coverColor,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* footer: launch + attention */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-            {launch ? (
-              <span className={`flex items-center gap-1 ${launch.className}`}>
-                <Rocket className="size-3.5" />
-                {launch.text}
-              </span>
-            ) : null}
-            {s.blocked > 0 ? (
-              <span className="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                <Ban className="size-3.5" />
-                {s.blocked} blocked
-              </span>
-            ) : null}
-            {s.overdue > 0 ? (
-              <span className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
-                <AlertTriangle className="size-3.5" />
-                {s.overdue} overdue
-              </span>
-            ) : null}
-            {s.attention === 0 && s.total > 0 ? (
-              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                <CircleCheck className="size-3.5" />
-                On track
-              </span>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-function launchLabel(
-  days: number | null,
-): { text: string; className: string } | null {
-  if (days === null) return null;
-  if (days < 0)
-    return {
-      text: `Launched ${-days}d ago`,
-      className: "text-muted-foreground",
-    };
-  if (days === 0)
-    return { text: "Launches today", className: "font-semibold text-red-600 dark:text-red-400" };
-  if (days <= 14)
-    return {
-      text: `Launches in ${days}d`,
-      className: "font-semibold text-red-600 dark:text-red-400",
-    };
-  if (days <= 30)
-    return {
-      text: `Launches in ${days}d`,
-      className: "font-medium text-amber-600 dark:text-amber-400",
-    };
-  return { text: `Launches in ${days}d`, className: "text-muted-foreground" };
-}

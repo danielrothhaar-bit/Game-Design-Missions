@@ -1,7 +1,6 @@
 import {
   Briefcase,
   LayoutDashboard,
-  Gamepad2,
   Users,
   Shield,
   type LucideIcon,
@@ -24,7 +23,6 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/my-work", label: "My Quests", icon: Briefcase, exact: true },
   { href: "/portfolio", label: "Portfolio", icon: LayoutDashboard },
-  { href: "/games", label: "Games", icon: Gamepad2, exact: true },
   { href: "/team", label: "Team", icon: Users, exact: true },
   { href: "/admin", label: "Admin", icon: Shield, adminOnly: true },
 ];

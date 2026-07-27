@@ -9,6 +9,7 @@ import {
   listGameStatuses,
   listDivisions,
   listGames,
+  listAllGames,
 } from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
 import { getPhaseTemplates } from "@/db/phase-templates";
@@ -19,6 +20,7 @@ import { BadgesAdmin } from "@/components/admin/badges-admin";
 import { GameStatusesAdmin } from "@/components/admin/game-statuses-admin";
 import { UsersAdmin } from "@/components/admin/users-admin";
 import { DivisionsAdmin } from "@/components/admin/divisions-admin";
+import { GamesManager } from "@/components/games/games-manager";
 import { TaskDefaultsAdmin } from "@/components/admin/task-defaults-admin";
 
 export const metadata = { title: "Admin" };
@@ -58,7 +60,7 @@ export default async function AdminPage() {
 
   const configRow = await db.query.appConfig.findFirst();
 
-  const [divisionRows, userDivisionRows, completedAssignments] =
+  const [divisionRows, userDivisionRows, completedAssignments, allGames] =
     await Promise.all([
       listDivisions(),
       db.query.userDivisions.findMany(),
@@ -70,6 +72,7 @@ export default async function AdminPage() {
           },
         },
       }),
+      listAllGames(),
     ]);
 
   // Promotion check: completed tasks per user/skill/difficulty vs the skill's
@@ -185,6 +188,7 @@ export default async function AdminPage() {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="statuses">Game Statuses</TabsTrigger>
           <TabsTrigger value="divisions">Divisions</TabsTrigger>
+          <TabsTrigger value="games">Games</TabsTrigger>
           <TabsTrigger value="phases">Task Templates</TabsTrigger>
         </TabsList>
 
@@ -323,6 +327,27 @@ export default async function AdminPage() {
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="games" className="mt-4">
+          <GamesManager
+            divisions={divisionRows.map((d) => ({
+              slug: d.slug,
+              label: d.label,
+              color: d.color,
+            }))}
+            statuses={gameStatuses.map((s) => ({ slug: s.slug, label: s.label }))}
+            games={allGames.map((g) => ({
+              id: g.id,
+              slug: g.slug,
+              name: g.name,
+              division: g.division,
+              coverColor: g.coverColor,
+              coverImage: g.coverImage,
+              statusSlug: g.statusSlug ?? g.status,
+              archived: g.archivedAt !== null,
+            }))}
+          />
         </TabsContent>
 
         <TabsContent value="phases" className="mt-4">

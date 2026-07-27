@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { effectiveUserId } from "@/lib/impersonation";
@@ -8,8 +7,8 @@ import { listGames, listGameStatuses } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertTriangle, Ban, Flame, Trophy } from "lucide-react";
-import { GameShield } from "@/components/games/game-shield";
+import { Flame, Trophy } from "lucide-react";
+import { GameModule } from "@/components/games/game-module";
 import { MyWorkTabs } from "@/components/my-work-tabs";
 
 export const metadata = { title: "My Quests" };
@@ -121,12 +120,17 @@ export default async function MyWorkPage() {
   }
   const leadSummaries = leadGames.map((g) => {
     const ts = tasksByGame.get(g.id) ?? [];
-    const total = ts.length;
-    const done = ts.filter((t) => t.status === "DONE").length;
-    const blocked = ts.filter((t) => t.status === "BLOCKED").length;
-    const overdueCount = ts.filter(
-      (t) => t.status !== "DONE" && t.dueDate && t.dueDate.getTime() < now,
+    const open = ts.filter((t) => t.status !== "DONE");
+    const overdue = open.filter(
+      (t) => t.dueDate && t.dueDate.getTime() < now,
     ).length;
+    const dueSoon = open.filter(
+      (t) =>
+        t.dueDate &&
+        t.dueDate.getTime() >= now &&
+        t.dueDate.getTime() <= now + 3 * DAY,
+    ).length;
+    const future = open.length - overdue - dueSoon;
     const status = statusBy.get(g.statusSlug ?? g.status);
     const daysToLaunch = g.launchDate
       ? Math.round((g.launchDate.getTime() - now) / DAY)
@@ -138,12 +142,9 @@ export default async function MyWorkPage() {
       coverColor: g.coverColor,
       coverImage: g.coverImage,
       statusLabel: status?.label ?? g.statusSlug ?? g.status,
-      statusColor: status?.color ?? "#6b7280",
-      total,
-      done,
-      blocked,
-      overdue: overdueCount,
-      pct: total === 0 ? 0 : Math.round((done / total) * 100),
+      overdue,
+      dueSoon,
+      future,
       daysToLaunch,
     };
   });
@@ -338,7 +339,20 @@ export default async function MyWorkPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {leadSummaries.map((g) => (
-              <LeadGameCard key={g.id} g={g} />
+              <GameModule
+                key={g.id}
+                slug={g.slug}
+                name={g.name}
+                coverColor={g.coverColor}
+                coverImage={g.coverImage}
+                statusLabel={g.statusLabel}
+                counts={{
+                  overdue: g.overdue,
+                  dueSoon: g.dueSoon,
+                  future: g.future,
+                }}
+                daysToLaunch={g.daysToLaunch}
+              />
             ))}
           </div>
         </section>
@@ -352,92 +366,6 @@ export default async function MyWorkPage() {
         projects={projectOptions}
       />
     </div>
-  );
-}
-
-type LeadSummary = {
-  slug: string;
-  name: string;
-  coverColor: string;
-  coverImage: string | null;
-  statusLabel: string;
-  statusColor: string;
-  total: number;
-  done: number;
-  blocked: number;
-  overdue: number;
-  pct: number;
-  daysToLaunch: number | null;
-};
-
-function LeadGameCard({ g }: { g: LeadSummary }) {
-  return (
-    <Link href={`/games/${g.slug}`} className="group block">
-      <Card className="relative overflow-hidden transition-colors hover:border-foreground/25">
-        <span
-          aria-hidden
-          className="absolute inset-y-0 left-0 w-1"
-          style={{ backgroundColor: g.coverColor }}
-        />
-        <CardContent className="space-y-3 p-4 pl-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <GameShield slug={g.slug} coverImage={g.coverImage} size={36} />
-              <h3 className="truncate text-base font-bold leading-tight">
-                {g.name}
-              </h3>
-            </div>
-            <span
-              className="shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold"
-              style={{
-                backgroundColor: `${g.statusColor}22`,
-                color: g.statusColor,
-                borderColor: `${g.statusColor}55`,
-              }}
-            >
-              {g.statusLabel}
-            </span>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {g.done} / {g.total} tasks done
-              </span>
-              <span className="font-bold tabular-nums">{g.pct}%</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full"
-                style={{ width: `${g.pct}%`, backgroundColor: g.coverColor }}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-            {g.daysToLaunch !== null ? (
-              <span className="text-muted-foreground">
-                {g.daysToLaunch >= 0
-                  ? `Launches in ${g.daysToLaunch}d`
-                  : `Launched ${-g.daysToLaunch}d ago`}
-              </span>
-            ) : null}
-            {g.blocked > 0 ? (
-              <span className="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                <Ban className="size-3.5" />
-                {g.blocked} blocked
-              </span>
-            ) : null}
-            {g.overdue > 0 ? (
-              <span className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
-                <AlertTriangle className="size-3.5" />
-                {g.overdue} overdue
-              </span>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
   );
 }
 
