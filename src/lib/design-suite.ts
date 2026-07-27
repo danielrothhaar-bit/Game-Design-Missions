@@ -24,7 +24,10 @@ import {
  * bundle.
  */
 
-const BASE = process.env.DESIGN_SUITE_URL ?? "";
+// Strip any trailing slash: a trailing slash would make `${BASE}/api/...`
+// a double slash, which the Design Suite server routes to its SPA (HTML)
+// instead of the API, breaking res.json().
+const BASE = (process.env.DESIGN_SUITE_URL ?? "").replace(/\/+$/, "");
 const KEY = process.env.DESIGN_SUITE_KEY ?? "";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
@@ -190,7 +193,13 @@ export async function runDesignSuiteSync(): Promise<SyncSummary> {
   const url = `/api/actions${since ? `?since=${encodeURIComponent(since.toISOString())}` : ""}`;
 
   const res = await dsFetch(url, { method: "GET" });
-  if (!res.ok) throw new Error(`Design Suite pull failed: ${res.status}`);
+  if (!res.ok) throw new Error(`Design Suite pull failed: HTTP ${res.status}`);
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      `Design Suite pull returned ${contentType || "an unknown content type"}, not JSON — check that DESIGN_SUITE_URL points at the API host.`,
+    );
+  }
   const { actions, serverTime } = (await res.json()) as {
     actions: DesignSuiteAction[];
     serverTime: string;
