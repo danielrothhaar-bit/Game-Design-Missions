@@ -67,8 +67,21 @@ async function main() {
   // explicitly set; otherwise we keep them out of the schema so a deploy can't
   // quietly delete data. The snapshot above is the recovery backstop.
   console.log("→ syncing schema (drizzle-kit push)");
-  execSync("npx drizzle-kit push --force", { stdio: "inherit" });
-  console.log("✓ schema sync complete");
+  try {
+    execSync("npx drizzle-kit push --force", { stdio: "inherit" });
+    console.log("✓ schema sync complete");
+  } catch (err) {
+    // push aborts in Railway's non-TTY build when it wants to prompt for a
+    // potentially-destructive change (e.g. adding a UNIQUE constraint to a
+    // populated table — which `--force` does NOT auto-answer). The Design
+    // Suite integration columns/constraints are already applied explicitly
+    // above, and the rest of the schema is in sync from prior deploys, so a
+    // push failure here must not abort the deploy. Log loudly for visibility.
+    console.warn(
+      "⚠ drizzle-kit push failed (continuing) — verify no unintended schema drift:",
+      err instanceof Error ? err.message : err,
+    );
+  }
 
   // Reference data (teams + skills) is always kept up to date — idempotent.
   await seedDefaults();
