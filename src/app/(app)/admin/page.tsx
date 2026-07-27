@@ -22,6 +22,8 @@ import { UsersAdmin } from "@/components/admin/users-admin";
 import { DivisionsAdmin } from "@/components/admin/divisions-admin";
 import { GamesManager } from "@/components/games/games-manager";
 import { TaskDefaultsAdmin } from "@/components/admin/task-defaults-admin";
+import { DesignSuiteAdmin } from "@/components/admin/design-suite-admin";
+import { designSuiteConfigured } from "@/lib/design-suite";
 
 export const metadata = { title: "Admin" };
 
@@ -59,6 +61,10 @@ export default async function AdminPage() {
   ]);
 
   const configRow = await db.query.appConfig.findFirst();
+
+  const dsMapRows = await db.query.designSuiteUserMap.findMany({
+    orderBy: (m, { asc }) => [asc(m.designSuiteName)],
+  });
 
   const [divisionRows, userDivisionRows, completedAssignments, allGames] =
     await Promise.all([
@@ -190,7 +196,32 @@ export default async function AdminPage() {
           <TabsTrigger value="divisions">Divisions</TabsTrigger>
           <TabsTrigger value="games">Games</TabsTrigger>
           <TabsTrigger value="phases">Task Templates</TabsTrigger>
+          <TabsTrigger value="integration">Integration</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="integration" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Game Design Suite — action item sync
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DesignSuiteAdmin
+                initialMap={dsMapRows.map((m) => ({
+                  designSuiteName: m.designSuiteName,
+                  email: m.email,
+                }))}
+                configured={designSuiteConfigured()}
+                lastSync={
+                  configRow?.designSuiteSyncCursor
+                    ? configRow.designSuiteSyncCursor.toISOString()
+                    : null
+                }
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="xp" className="mt-4">
           <Card>

@@ -32,6 +32,7 @@ import {
 } from "@/lib/config";
 import { effectiveUserId } from "@/lib/impersonation";
 import { businessDaysBetween } from "@/lib/dates";
+import { writeStatusToDesignSuite } from "@/lib/design-suite";
 
 const TaskStatusEnum = z.enum([
   "TODO",
@@ -122,6 +123,13 @@ export async function updateTaskFields(input: z.input<typeof UpdateInput>) {
           : "UPDATED",
     payload: patch as Record<string, unknown>,
   });
+
+  // Model B: Quests owns task lifecycle. If this task came from a Design Suite
+  // action, push the new status back so it shows there (read-only). Safe no-op
+  // if the integration is off; never throws.
+  if (patch.status && current.designSuiteRef) {
+    await writeStatusToDesignSuite(current.designSuiteRef, patch.status);
+  }
 
   revalidatePath(`/games/${current.game.slug}`);
   revalidatePath("/my-work");
