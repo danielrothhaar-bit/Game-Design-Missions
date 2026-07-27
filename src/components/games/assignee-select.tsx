@@ -47,7 +47,7 @@ export function AssigneeSelect({
               {assigned.image ? (
                 <AvatarImage src={assigned.image} alt={assigned.name ?? ""} />
               ) : null}
-              <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                 {initials(assigned.name ?? assigned.email)}
               </AvatarFallback>
             </Avatar>
@@ -89,13 +89,13 @@ export function AssigneeSelect({
                     {u.image ? (
                       <AvatarImage src={u.image} alt={u.name ?? ""} />
                     ) : null}
-                    <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                       {initials(u.name ?? u.email)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col leading-tight">
                     <span className="text-sm">{u.name ?? u.email}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {u.email}
                     </span>
                   </div>

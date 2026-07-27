@@ -163,7 +163,10 @@ export async function getPhaseTemplates() {
     with: {
       tasks: {
         orderBy: (t, { asc }) => [asc(t.order)],
-        with: { team: true },
+        with: {
+          team: true,
+          skills: { with: { skill: true } },
+        },
       },
     },
   });

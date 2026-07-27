@@ -38,7 +38,11 @@ export default async function AppLayout({
 
   const sidebarProps = {
     statuses: statuses.map((s) => ({ slug: s.slug, label: s.label })),
-    divisions: visibleDivisions.map((d) => ({ slug: d.slug, label: d.label })),
+    divisions: visibleDivisions.map((d) => ({
+      slug: d.slug,
+      label: d.label,
+      color: d.color,
+    })),
     games: games.map((g) => ({
       slug: g.slug,
       name: g.name,

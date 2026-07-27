@@ -103,7 +103,7 @@ export default async function GameTimelinePage({
               {ticks.map((t) => (
                 <span
                   key={t.label + t.left}
-                  className="absolute -translate-x-1/2 text-[10px] text-muted-foreground"
+                  className="absolute -translate-x-1/2 text-xs text-muted-foreground"
                   style={{ left: `${t.left}%` }}
                 >
                   {t.label}
@@ -111,7 +111,7 @@ export default async function GameTimelinePage({
               ))}
               {launchLeft !== null && launchLeft >= 0 && launchLeft <= 100 ? (
                 <span
-                  className="absolute -translate-x-1/2 rounded bg-pink-500/20 px-1 text-[10px] text-pink-300"
+                  className="absolute -translate-x-1/2 rounded bg-pink-500/20 px-1 text-xs text-pink-300"
                   style={{ left: `${launchLeft}%` }}
                 >
                   launch

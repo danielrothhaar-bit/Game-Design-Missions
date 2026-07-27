@@ -8,11 +8,12 @@ import {
   listTeams,
   listGameStatuses,
   listDivisions,
+  listGames,
 } from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
 import { getPhaseTemplates } from "@/db/phase-templates";
 import { SkillsAdmin } from "@/components/admin/skills-admin";
-import { PhaseTasksAdmin } from "@/components/admin/phase-tasks-admin";
+import { TaskTemplatesAdmin } from "@/components/admin/phase-tasks-admin";
 import { XpConfigAdmin } from "@/components/admin/xp-config-admin";
 import { BadgesAdmin } from "@/components/admin/badges-admin";
 import { GameStatusesAdmin } from "@/components/admin/game-statuses-admin";
@@ -42,6 +43,7 @@ export default async function AdminPage() {
     gameStatuses,
     userRows,
     userSkillRows,
+    gameRows,
   ] = await Promise.all([
     listSkills(true),
     listTeams(),
@@ -51,6 +53,7 @@ export default async function AdminPage() {
     listGameStatuses(),
     db.query.users.findMany({ orderBy: (u, { asc }) => [asc(u.name)] }),
     db.query.userSkills.findMany(),
+    listGames(),
   ]);
 
   const configRow = await db.query.appConfig.findFirst();
@@ -182,7 +185,7 @@ export default async function AdminPage() {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="statuses">Game Statuses</TabsTrigger>
           <TabsTrigger value="divisions">Divisions</TabsTrigger>
-          <TabsTrigger value="phases">Phase Tasks</TabsTrigger>
+          <TabsTrigger value="phases">Task Templates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="xp" className="mt-4">
@@ -323,12 +326,16 @@ export default async function AdminPage() {
         </TabsContent>
 
         <TabsContent value="phases" className="mt-4">
-          <PhaseTasksAdmin
+          <TaskTemplatesAdmin
             teams={teams.map((t) => ({
               id: t.id,
               name: t.name,
               color: t.color,
             }))}
+            skills={skills
+              .filter((s) => !s.archived)
+              .map((s) => ({ id: s.id, name: s.name, color: s.color }))}
+            games={gameRows.map((g) => ({ id: g.id, name: g.name }))}
             initialPhases={phaseTemplates.map((p) => ({
               id: p.id,
               name: p.name,
@@ -337,6 +344,12 @@ export default async function AdminPage() {
                 id: t.id,
                 title: t.title,
                 teamId: t.teamId ?? null,
+                priority: t.priority,
+                scopeSize: t.scopeSize,
+                skills: t.skills.map((s) => ({
+                  skillId: s.skillId,
+                  level: s.level,
+                })),
               })),
             }))}
           />

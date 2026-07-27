@@ -167,7 +167,7 @@ export default async function ProfilePage() {
                       <p className="text-xs text-muted-foreground">
                         {badge.description}
                       </p>
-                      <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      <p className="mt-0.5 text-xs text-muted-foreground">
                         Awarded {awardedAt.toLocaleDateString()}
                       </p>
                     </div>

@@ -118,7 +118,7 @@ export function GameStatusesAdmin({ initial }: { initial: Status[] }) {
           statuses.map((s, i) => (
             <li key={s.slug} className="flex items-center gap-3 px-4 py-2.5">
               <span
-                className="rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+                className="rounded-full border px-2 py-0.5 text-xs font-medium uppercase tracking-wider"
                 style={{
                   backgroundColor: `${s.color}22`,
                   color: s.color,

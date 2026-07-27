@@ -259,7 +259,7 @@ export function XpConfigAdmin({ initial }: { initial: XpConfig }) {
                   }))
                 }
               />
-              <span className="w-24 text-right text-[11px] text-muted-foreground">
+              <span className="w-24 text-right text-xs text-muted-foreground">
                 {xpForLevel(t.from, cfg).toLocaleString()} XP
               </span>
               <Button

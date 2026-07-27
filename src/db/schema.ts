@@ -259,8 +259,28 @@ export const phaseTemplateTasks = pgTable("phase_template_task", {
     .references(() => phaseTemplates.id, { onDelete: "cascade" }),
   title: varchar({ length: 280 }).notNull(),
   teamId: text().references(() => teams.id, { onDelete: "set null" }),
+  // Standard task fields that get copied onto tasks created from this
+  // template (alongside the skills join below).
+  priority: taskPriority().notNull().default("MEDIUM"),
+  scopeSize: text().notNull().default("M"),
   order: integer().notNull().default(0),
 });
+
+// Skills (with difficulty) attached to a template task — copied onto the
+// real task's task_skill rows when the template is applied.
+export const phaseTemplateTaskSkills = pgTable(
+  "phase_template_task_skill",
+  {
+    templateTaskId: text()
+      .notNull()
+      .references(() => phaseTemplateTasks.id, { onDelete: "cascade" }),
+    skillId: text()
+      .notNull()
+      .references(() => skills.id, { onDelete: "cascade" }),
+    level: experienceLevel().notNull().default("INTERMEDIATE"),
+  },
+  (t) => [primaryKey({ columns: [t.templateTaskId, t.skillId] })],
+);
 
 /* ───────────────────── domain tables ────────────────────── */
 
@@ -757,7 +777,7 @@ export const phaseTemplatesRelations = relations(
 
 export const phaseTemplateTasksRelations = relations(
   phaseTemplateTasks,
-  ({ one }) => ({
+  ({ one, many }) => ({
     template: one(phaseTemplates, {
       fields: [phaseTemplateTasks.phaseTemplateId],
       references: [phaseTemplates.id],
@@ -765,6 +785,21 @@ export const phaseTemplateTasksRelations = relations(
     team: one(teams, {
       fields: [phaseTemplateTasks.teamId],
       references: [teams.id],
+    }),
+    skills: many(phaseTemplateTaskSkills),
+  }),
+);
+
+export const phaseTemplateTaskSkillsRelations = relations(
+  phaseTemplateTaskSkills,
+  ({ one }) => ({
+    templateTask: one(phaseTemplateTasks, {
+      fields: [phaseTemplateTaskSkills.templateTaskId],
+      references: [phaseTemplateTasks.id],
+    }),
+    skill: one(skills, {
+      fields: [phaseTemplateTaskSkills.skillId],
+      references: [skills.id],
     }),
   }),
 );

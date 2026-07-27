@@ -139,13 +139,13 @@ export function SkillSelect({
               return (
                 <span
                   key={s.id}
-                  className="inline-flex max-w-[130px] items-center gap-1 rounded py-0.5 pl-1.5 pr-0.5 text-[10px]"
+                  className="inline-flex max-w-[130px] items-center gap-1 rounded py-0.5 pl-1.5 pr-0.5 text-xs"
                   style={{ backgroundColor: `${s.color}22`, color: s.color }}
                 >
                   <span className="truncate">{s.name}</span>
                   {lvl ? (
                     <span
-                      className="rounded px-1 text-[9px] font-bold"
+                      className="rounded px-1 text-xs font-bold"
                       style={{
                         backgroundColor: SKILL_LEVEL_COLOR[lvl],
                         color: "#0a0a0a",
@@ -158,7 +158,7 @@ export function SkillSelect({
               );
             })}
             {selectedSkills.length > 2 ? (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 +{selectedSkills.length - 2}
               </span>
             ) : null}

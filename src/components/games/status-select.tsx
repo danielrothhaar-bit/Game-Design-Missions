@@ -28,7 +28,7 @@ export function StatusPill({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={`inline-flex h-6 items-center rounded border px-2 text-[10px] font-medium uppercase tracking-wider transition-colors ${taskStatusColor(status)}`}
+        className={`inline-flex h-6 items-center rounded border px-2 text-xs font-medium uppercase tracking-wider transition-colors ${taskStatusColor(status)}`}
       >
         {taskStatusLabel(status)}
       </DropdownMenuTrigger>
@@ -40,7 +40,7 @@ export function StatusPill({
             className="text-xs"
           >
             <span
-              className={`inline-flex h-5 items-center rounded border px-1.5 text-[10px] font-medium uppercase tracking-wider ${taskStatusColor(s)}`}
+              className={`inline-flex h-5 items-center rounded border px-1.5 text-xs font-medium uppercase tracking-wider ${taskStatusColor(s)}`}
             >
               {taskStatusLabel(s)}
             </span>
@@ -133,7 +133,7 @@ export function ScopeSelect({
             <span className="w-7 font-medium">{s}</span>
             <span className="text-muted-foreground">{SCOPE_LABELS[s]}</span>
             {hint?.[s] ? (
-              <span className="ml-auto text-[10px] text-muted-foreground">
+              <span className="ml-auto text-xs text-muted-foreground">
                 {hint[s]}
               </span>
             ) : s === value ? (

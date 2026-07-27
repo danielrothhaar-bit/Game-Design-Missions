@@ -23,7 +23,7 @@ type Game = {
 };
 
 type StatusOption = { slug: string; label: string };
-type DivisionOption = { slug: string; label: string };
+type DivisionOption = { slug: string; label: string; color: string };
 
 export type SidebarProps = {
   games: Game[];
@@ -79,15 +79,18 @@ export function SidebarBody({
 
         <ProjectsHeader />
 
-        {divisions.map((div) => (
-          <DivisionSection
-            key={div.slug}
-            label={div.label}
-            slug={div.slug}
-            statuses={statuses}
-            games={games.filter((g) => g.division === div.slug)}
-          />
-        ))}
+        <div className="space-y-2">
+          {divisions.map((div) => (
+            <DivisionSection
+              key={div.slug}
+              label={div.label}
+              slug={div.slug}
+              color={div.color}
+              statuses={statuses}
+              games={games.filter((g) => g.division === div.slug)}
+            />
+          ))}
+        </div>
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
@@ -168,14 +171,17 @@ function ProjectsHeader() {
 function DivisionSection({
   label,
   slug,
+  color,
   statuses,
   games,
 }: {
   label: string;
   slug: string;
+  color: string;
   statuses: StatusOption[];
   games: Game[];
 }) {
+  const [open, setOpen] = useState(true);
   const knownSlugs = new Set(statuses.map((s) => s.slug));
   const grouped = [
     ...statuses.map((s) => ({
@@ -189,17 +195,44 @@ function DivisionSection({
   ].filter((group) => group.games.length > 0);
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between px-2.5 pb-1.5">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </span>
+    <div
+      className="overflow-hidden rounded-lg border border-sidebar-border/60"
+      // Tinted background in the division's own color so each stands apart.
+      style={{
+        backgroundColor: `color-mix(in srgb, ${color} 12%, var(--sidebar))`,
+        borderColor: `color-mix(in srgb, ${color} 35%, var(--sidebar-border))`,
+      }}
+    >
+      <div className="flex items-center gap-1.5 px-2 py-1.5">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left"
+          aria-expanded={open}
+        >
+          <ChevronRight
+            className={cn(
+              "size-3.5 shrink-0 text-muted-foreground transition-transform",
+              open && "rotate-90",
+            )}
+          />
+          <span
+            className="size-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: color }}
+          />
+          <span className="truncate text-sm font-bold uppercase tracking-wide">
+            {label}
+          </span>
+          <span className="ml-1 shrink-0 text-xs tabular-nums text-muted-foreground">
+            {games.length}
+          </span>
+        </button>
         <Tooltip>
           <TooltipTrigger
             render={
               <Link
                 href={`/games/new?division=${slug}`}
-                className="grid size-6 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                className="grid size-6 shrink-0 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 aria-label={`New ${label} project`}
               >
                 <Plus className="size-4" />
@@ -209,21 +242,25 @@ function DivisionSection({
           <TooltipContent>New project</TooltipContent>
         </Tooltip>
       </div>
-      {games.length === 0 ? (
-        <p className="px-2.5 py-1 text-sm text-muted-foreground">
-          No projects yet.
-        </p>
-      ) : (
-        <div className="space-y-1">
-          {grouped.map((group) => (
-            <GameGroup
-              key={group.label}
-              label={group.label}
-              games={group.games}
-            />
-          ))}
+      {open ? (
+        <div className="px-1.5 pb-1.5">
+          {games.length === 0 ? (
+            <p className="px-2 py-1 text-sm text-muted-foreground">
+              No projects yet.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {grouped.map((group) => (
+                <GameGroup
+                  key={group.label}
+                  label={group.label}
+                  games={group.games}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

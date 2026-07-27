@@ -94,12 +94,12 @@ function TaskList({
           {tasks.map((t) => (
             <li key={t.id} className="flex items-center gap-3 px-4 py-3 sm:px-6">
               <span
-                className={`hidden shrink-0 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider sm:inline ${taskStatusColor(t.status)}`}
+                className={`hidden shrink-0 rounded border px-2 py-0.5 text-xs font-medium uppercase tracking-wider sm:inline ${taskStatusColor(t.status)}`}
               >
                 {taskStatusLabel(t.status)}
               </span>
               <span
-                className={`w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
+                className={`w-12 shrink-0 text-xs font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
               >
                 {t.priority.toLowerCase()}
               </span>

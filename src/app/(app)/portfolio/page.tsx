@@ -309,7 +309,7 @@ function ProjectCard({
                 </h3>
                 {s.lead ? (
                   <span className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <span className="grid size-4 place-items-center rounded-full bg-secondary text-[9px] font-bold">
+                    <span className="grid size-4 place-items-center rounded-full bg-secondary text-xs font-bold">
                       {initials(s.lead.name ?? s.lead.email)}
                     </span>
                     {(s.lead.name ?? s.lead.email).split(" ")[0]}

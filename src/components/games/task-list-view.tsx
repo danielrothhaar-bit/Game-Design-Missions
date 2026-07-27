@@ -346,7 +346,7 @@ export function TaskListView({
               <button
                 key={s}
                 onClick={() => toggleStatus(s)}
-                className={`rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-wider transition-colors ${
+                className={`rounded-full border px-2.5 py-0.5 text-xs uppercase tracking-wider transition-colors ${
                   on
                     ? "border-foreground/30 bg-foreground/10 text-foreground"
                     : "border-border text-muted-foreground hover:bg-accent"
@@ -365,7 +365,7 @@ export function TaskListView({
               <button
                 key={p}
                 onClick={() => togglePriority(p)}
-                className={`rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-wider transition-colors ${
+                className={`rounded-full border px-2.5 py-0.5 text-xs uppercase tracking-wider transition-colors ${
                   on
                     ? "border-foreground/30 bg-foreground/10 text-foreground"
                     : "border-border text-muted-foreground hover:bg-accent"
@@ -445,7 +445,7 @@ export function TaskListView({
           <div
             className={cn(
               tab === "other" ? GRID_OTHER : GRID_DESIGN,
-              "border-b border-border bg-muted/30 px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground",
+              "border-b border-border bg-muted/30 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground",
             )}
           >
             <SortHeader label="Status" col="status" sort={sort} onSort={toggleSort} />
@@ -529,7 +529,7 @@ function SortHeader({
       type="button"
       onClick={() => onSort(col)}
       className={cn(
-        "flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider transition-colors hover:text-foreground",
+        "flex items-center gap-1 text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground",
         active ? "text-foreground" : "text-muted-foreground",
         center && "justify-center",
       )}
@@ -671,7 +671,7 @@ function TaskRow({
             {task.labels.map((tl) => (
               <span
                 key={tl.label.id}
-                className="rounded px-1.5 py-0.5 text-[10px]"
+                className="rounded px-1.5 py-0.5 text-xs"
                 style={{
                   backgroundColor: `${tl.label.color}22`,
                   color: tl.label.color,

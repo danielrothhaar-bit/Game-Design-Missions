@@ -202,7 +202,7 @@ function MyWorkMock() {
             {["First Quest", "On-Time x10", "Hot Streak"].map((b) => (
               <span
                 key={b}
-                className="border border-border bg-secondary px-1.5 py-0.5 text-[11px] text-foreground"
+                className="border border-border bg-secondary px-1.5 py-0.5 text-xs text-foreground"
               >
                 ✦ {b}
               </span>

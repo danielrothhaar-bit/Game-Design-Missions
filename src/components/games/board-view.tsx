@@ -133,7 +133,7 @@ function Column({
     <div className="flex w-72 shrink-0 flex-col">
       <div className="mb-2 flex items-center gap-2 px-1">
         <span
-          className={`inline-flex h-5 items-center rounded border px-1.5 text-[10px] font-medium uppercase tracking-wider ${taskStatusColor(status)}`}
+          className={`inline-flex h-5 items-center rounded border px-1.5 text-xs font-medium uppercase tracking-wider ${taskStatusColor(status)}`}
         >
           {taskStatusLabel(status)}
         </span>
@@ -178,7 +178,7 @@ function Card({ task, showTeam }: { task: BoardTask; showTeam: boolean }) {
       )}
     >
       <p className="text-sm leading-snug">{task.title}</p>
-      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span
           className={`font-semibold uppercase tracking-wider ${taskPriorityColor(task.priority)}`}
         >

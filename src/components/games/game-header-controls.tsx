@@ -95,7 +95,7 @@ export function GameStatusPicker({
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={pending}
-        className="inline-flex h-6 items-center rounded border px-2 text-[10px] font-medium uppercase tracking-wider transition-colors"
+        className="inline-flex h-6 items-center rounded border px-2 text-xs font-medium uppercase tracking-wider transition-colors"
         style={statusPillStyle(current.color)}
       >
         {current.label}
@@ -108,7 +108,7 @@ export function GameStatusPicker({
             className="text-xs"
           >
             <span
-              className="inline-flex h-5 items-center rounded border px-1.5 text-[10px] font-medium uppercase tracking-wider"
+              className="inline-flex h-5 items-center rounded border px-1.5 text-xs font-medium uppercase tracking-wider"
               style={statusPillStyle(s.color)}
             >
               {s.label}

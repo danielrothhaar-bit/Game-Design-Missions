@@ -312,7 +312,7 @@ function UserRow({
       {open ? (
         <div className="space-y-4 border-t border-border px-4 py-3">
           <div>
-            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Visible divisions
             </p>
             <div className="flex flex-wrap gap-2">
@@ -337,7 +337,7 @@ function UserRow({
             </div>
           </div>
           <div>
-            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Password
             </p>
             <PasswordControl
@@ -346,7 +346,7 @@ function UserRow({
             />
           </div>
           <div>
-            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Skill proficiency
             </p>
             <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">

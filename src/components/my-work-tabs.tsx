@@ -176,7 +176,7 @@ export function MyWorkTabs({
               {unassigned.map((t) => (
                 <li key={t.id} className="flex items-center gap-3 px-6 py-3">
                   <span
-                    className={`w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
+                    className={`w-14 shrink-0 text-xs font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
                   >
                     {t.priority.toLowerCase()}
                   </span>
@@ -257,7 +257,7 @@ export function MyWorkTabs({
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-2 font-medium">Skill</th>
                   <th className="px-3 py-2 text-center font-medium">Beginner</th>
                   <th className="px-3 py-2 text-center font-medium">
@@ -375,12 +375,12 @@ function TaskList({
           {tasks.map((t) => (
             <li key={t.id} className="flex items-center gap-3 px-4 py-3 sm:px-6">
               <span
-                className={`hidden shrink-0 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider sm:inline ${taskStatusColor(t.status)}`}
+                className={`hidden shrink-0 rounded border px-2 py-0.5 text-xs font-medium uppercase tracking-wider sm:inline ${taskStatusColor(t.status)}`}
               >
                 {taskStatusLabel(t.status)}
               </span>
               <span
-                className={`w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
+                className={`w-12 shrink-0 text-xs font-semibold uppercase tracking-wider ${taskPriorityColor(t.priority)}`}
               >
                 {t.priority.toLowerCase()}
               </span>
@@ -407,7 +407,7 @@ function TaskList({
                 onClick={() => onToggleToday(t.id, !t.doToday)}
                 title={t.doToday ? "Remove from Today" : "Do today"}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition-colors",
+                  "inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors",
                   t.doToday
                     ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
                     : "border-border text-muted-foreground hover:bg-accent",

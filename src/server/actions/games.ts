@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { activities, games, phases, tasks } from "@/db/schema";
+import { activities, games, phases, tasks, taskSkills } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { slugify } from "@/lib/format";
 import { getPhaseTemplates } from "@/db/phase-templates";
@@ -104,16 +104,33 @@ export async function createGame(input: z.input<typeof CreateGameInput>) {
         })
         .returning();
       if (tpl.tasks.length) {
-        await db.insert(tasks).values(
-          tpl.tasks.map((t) => ({
-            gameId: game.id,
-            phaseId: phase.id,
-            title: t.title,
-            teamId: t.teamId ?? null,
-            position: position++,
-            createdById: userId,
+        const created = await db
+          .insert(tasks)
+          .values(
+            tpl.tasks.map((t) => ({
+              gameId: game.id,
+              phaseId: phase.id,
+              title: t.title,
+              teamId: t.teamId ?? null,
+              priority: t.priority,
+              scopeSize: t.scopeSize,
+              position: position++,
+              createdById: userId,
+            })),
+          )
+          .returning();
+        // Copy each template task's skills onto the freshly-created task
+        // (same array order as the insert above).
+        const skillRows = created.flatMap((task, idx) =>
+          tpl.tasks[idx].skills.map((s) => ({
+            taskId: task.id,
+            skillId: s.skillId,
+            level: s.level,
           })),
         );
+        if (skillRows.length > 0) {
+          await db.insert(taskSkills).values(skillRows);
+        }
       }
     }
   }

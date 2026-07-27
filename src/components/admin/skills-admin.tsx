@@ -135,7 +135,7 @@ export function SkillsAdmin({ initialSkills }: { initialSkills: Skill[] }) {
               ) : (
                 <span className="flex-1 text-sm">{s.name}</span>
               )}
-              <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <label className="flex items-center gap-1 text-xs text-muted-foreground">
                 promote @
                 <Input
                   type="number"
