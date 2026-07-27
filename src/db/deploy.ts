@@ -45,13 +45,13 @@ async function main() {
       sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_ref" text`,
     );
     await db.execute(
-      sql`DO $$ BEGIN ALTER TABLE "task" ADD CONSTRAINT "task_designSuiteRef_unique" UNIQUE ("design_suite_ref"); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+      sql`DO $$ BEGIN ALTER TABLE "task" ADD CONSTRAINT "task_designSuiteRef_unique" UNIQUE ("design_suite_ref"); EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL; END $$`,
     );
     await db.execute(
       sql`ALTER TABLE "game" ADD COLUMN IF NOT EXISTS "design_suite_game_id" text`,
     );
     await db.execute(
-      sql`DO $$ BEGIN ALTER TABLE "game" ADD CONSTRAINT "game_designSuiteGameId_unique" UNIQUE ("design_suite_game_id"); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+      sql`DO $$ BEGIN ALTER TABLE "game" ADD CONSTRAINT "game_designSuiteGameId_unique" UNIQUE ("design_suite_game_id"); EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL; END $$`,
     );
     await db.execute(
       sql`ALTER TABLE "app_config" ADD COLUMN IF NOT EXISTS "design_suite_sync_cursor" timestamp with time zone`,
