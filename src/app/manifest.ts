@@ -2,23 +2,23 @@ import type { MetadataRoute } from "next";
 
 /**
  * Web app manifest. Lets people "Add to Home Screen" on iPhone and
- * "Add to Dock" on macOS (Safari, Sonoma+) and have Missions launch as a
+ * "Add to Dock" on macOS (Safari, Sonoma+) and have Quests launch as a
  * standalone app with our parchment theme.
  *
  * Served at /manifest.webmanifest via the Next.js metadata convention.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Missions",
-    short_name: "Missions",
+    name: "Quests",
+    short_name: "Quests",
     description:
       "Project management and gamification for The Escape Game design studio.",
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "any",
-    background_color: "#f3e7c8", // parchment cream
-    theme_color: "#7a1f1f", // deep burgundy — matches our --primary
+    background_color: "#ffffff", // Cosmo White
+    theme_color: "#ff4863", // Cosmo Red — matches our --primary
     categories: ["productivity", "business"],
     icons: [
       {

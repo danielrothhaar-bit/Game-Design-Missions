@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 
-export const metadata = { title: "Help · How Missions works" };
+export const metadata = { title: "Help · How Quests works" };
 
 const SKILL_LEVELS = [
   { label: "Beginner", color: "#22c55e" },
@@ -42,7 +42,7 @@ export default function HelpPage() {
         <CardContent className="space-y-3 p-6">
           <h2 className="text-base font-semibold">The big idea</h2>
           <p className="text-sm text-muted-foreground">
-            Missions turns finishing work into a little game. Every time you
+            Quests turns finishing work into a little game. Every time you
             complete a task, you earn <strong className="text-foreground">XP</strong>{" "}
             (experience points). Earn enough and you{" "}
             <strong className="text-foreground">level up</strong> and unlock new
@@ -95,7 +95,7 @@ export default function HelpPage() {
         <CardContent className="space-y-3 p-6">
           <h2 className="text-base font-semibold">The timing bonus</h2>
           <p className="text-sm text-muted-foreground">
-            When you finish matters too. Missions checks the due date:
+            When you finish matters too. Quests checks the due date:
           </p>
           <ul className="space-y-2">
             {TIMING.map((t) => (

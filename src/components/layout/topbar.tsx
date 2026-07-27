@@ -3,6 +3,7 @@ import { CommandPalette } from "./command-palette";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 import { TopbarNav } from "./topbar-nav";
+import { LevelPill } from "./level-pill";
 import { LogoLockup } from "@/components/brand/logo";
 
 export function Topbar({
@@ -17,6 +18,8 @@ export function Topbar({
     email: string;
     image: string | null;
     level: number;
+    title: string;
+    levelPct: number;
   };
   isAdmin: boolean;
   mobileNav?: React.ReactNode;
@@ -28,7 +31,12 @@ export function Topbar({
         <LogoLockup size={26} />
       </Link>
       <TopbarNav isAdmin={isAdmin} />
-      <div className="ml-auto flex items-center gap-1.5">
+      <div className="ml-auto flex items-center gap-2">
+        <LevelPill
+          level={user.level}
+          title={user.title}
+          pct={user.levelPct}
+        />
         <CommandPalette games={games} />
         <ThemeToggle />
         <UserMenu

@@ -11,6 +11,7 @@ import {
   hiddenDivisionsForUser,
 } from "@/lib/queries";
 import { getXpConfig } from "@/lib/config";
+import { progressInLevel, titleForLevel } from "@/lib/xp";
 import { resolveUsers } from "@/lib/impersonation";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,9 @@ export default async function AppLayout({
       hiddenDivisionsForUser(user.id),
     ]);
   const visibleDivisions = allDivisions.filter((d) => !hiddenDivs.has(d.slug));
+
+  const levelProgress = progressInLevel(user.totalXp, xpConfig);
+  const levelTitle = titleForLevel(levelProgress.level, xpConfig.titles);
 
   const sidebarProps = {
     statuses: statuses.map((s) => ({ slug: s.slug, label: s.label })),
@@ -75,7 +79,9 @@ export default async function AppLayout({
               name: user.name,
               email: user.email,
               image: user.image,
-              level: user.level,
+              level: levelProgress.level,
+              title: levelTitle,
+              levelPct: levelProgress.pct,
             }}
             isAdmin={user.role === "OWNER" || user.role === "ADMIN"}
             mobileNav={<MobileNav {...sidebarProps} />}

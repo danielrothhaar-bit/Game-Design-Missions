@@ -46,7 +46,7 @@ export function UserMenu({
           <span className="text-xs font-normal text-muted-foreground leading-tight">
             {email}
           </span>
-          <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
             Level {level}
           </span>
         </DropdownMenuLabel>

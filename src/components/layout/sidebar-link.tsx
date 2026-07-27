@@ -46,10 +46,10 @@ export function SidebarLink({
     <Link
       href={href}
       className={cn(
-        "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+        "group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
         active
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+          : "text-sidebar-foreground/90 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
       )}
     >
       <Icon className="size-4 shrink-0 opacity-80" />
@@ -78,10 +78,10 @@ export function SidebarGameLink({
       href={href}
       title={isLead ? "You lead this game" : undefined}
       className={cn(
-        "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+        "group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
         active
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+          : "text-sidebar-foreground/90 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
         isLead && !active && "bg-amber-400/10 text-foreground",
       )}
     >
@@ -90,12 +90,12 @@ export function SidebarGameLink({
         <img
           src={`/games/${slug}.webp`}
           alt=""
-          className="size-5 shrink-0 object-contain"
+          className="size-6 shrink-0 object-contain"
           onError={() => setHasShield(false)}
         />
       ) : (
         <span
-          className="inline-block size-2.5 shrink-0 rounded-full"
+          className="inline-block size-3 shrink-0 rounded-full"
           style={{ backgroundColor: color }}
           aria-hidden
         />

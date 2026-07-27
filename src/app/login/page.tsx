@@ -32,7 +32,7 @@ export default async function LoginPage() {
         <div className="mb-8 flex flex-col items-center gap-3">
           <Logo size={88} className="text-primary" />
           <h1 className="font-display text-3xl font-semibold tracking-wide">
-            Welcome to Missions
+            Welcome to Quests
           </h1>
           <p className="text-center text-sm italic text-muted-foreground">
             Sign in with your studio email. Google SSO coming soon.

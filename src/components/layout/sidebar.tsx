@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, LogOut, Plus, Trophy } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronRight, LayoutGrid, LogOut, Plus } from "lucide-react";
 import { logoutAction } from "@/server/actions/auth-actions";
-import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarLink, SidebarGameLink } from "./sidebar-link";
+import { navItemsFor, isActivePath } from "./nav-items";
 import { Logo } from "@/components/brand/logo";
-import { progressInLevel, titleForLevel, type XpConfig } from "@/lib/xp";
+import { type XpConfig } from "@/lib/xp";
 import { cn } from "@/lib/utils";
 
 type Game = {
@@ -59,9 +60,8 @@ export function SidebarBody({
   divisions,
   sidequests,
   user,
-  xpConfig,
 }: SidebarProps) {
-  const p = progressInLevel(user.totalXp, xpConfig);
+  const isAdmin = user.role === "OWNER" || user.role === "ADMIN";
 
   return (
     <div className="flex h-full flex-col">
@@ -69,17 +69,23 @@ export function SidebarBody({
         <Link href="/my-work" className="flex items-center gap-2">
           <Logo size={28} />
           <div className="flex flex-col leading-tight">
-            <span className="font-display text-sm font-semibold tracking-[0.18em] uppercase">
-              Missions
+            <span className="font-display text-lg font-bold tracking-[0.06em] uppercase">
+              Quests
             </span>
-            <span className="text-[11px] italic text-muted-foreground">
+            <span className="text-xs italic text-muted-foreground">
               The Escape Game
             </span>
           </div>
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-2">
+      <nav className="flex-1 overflow-y-auto px-2 py-3">
+        {/* App sections — only in the mobile drawer; on desktop these live in
+            the top bar, so the sidebar stays a pure project browser. */}
+        <MobileSectionNav isAdmin={isAdmin} />
+
+        <ProjectsHeader />
+
         {divisions.map((div) => (
           <DivisionSection
             key={div.slug}
@@ -94,34 +100,76 @@ export function SidebarBody({
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
-        <Link
-          href="/profile"
-          className="block rounded-md px-2 py-2 hover:bg-sidebar-accent/60"
-        >
-          <div className="flex items-center gap-2 text-xs">
-            <Trophy className="size-3.5 text-amber-400" />
-            <span className="font-medium">Level {p.level}</span>
-            <span className="text-muted-foreground">
-              · {titleForLevel(p.level, xpConfig.titles)}
-            </span>
-          </div>
-          <Progress value={p.pct} className="mt-2 h-1.5" />
-          <p className="mt-1.5 text-[10px] text-muted-foreground">
-            {p.intoLevel.toLocaleString()} / {p.needed.toLocaleString()} XP to
-            next level
-          </p>
-        </Link>
-        <div className="mt-1">
-          <SidebarLink href="/help" icon="help" label="Help" />
-        </div>
+        <SidebarLink href="/help" icon="help" label="Help" />
         <button
           onClick={() => logoutAction()}
-          className="mt-1 flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+          className="mt-1 flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
         >
           <LogOut className="size-4 shrink-0 opacity-80" />
           Sign out
         </button>
       </div>
+    </div>
+  );
+}
+
+function MobileSectionNav({ isAdmin }: { isAdmin: boolean }) {
+  const pathname = usePathname();
+  const items = navItemsFor(isAdmin);
+  return (
+    <div className="mb-4 space-y-0.5 md:hidden">
+      {items.map((it) => {
+        const active = isActivePath(pathname, it);
+        const Icon = it.icon;
+        return (
+          <Link
+            key={it.href}
+            href={it.href}
+            className={cn(
+              "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+              active
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/90 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+            )}
+          >
+            <Icon className="size-4 shrink-0 opacity-80" />
+            {it.label}
+          </Link>
+        );
+      })}
+      <div className="mt-3 border-t border-sidebar-border/70" />
+    </div>
+  );
+}
+
+function ProjectsHeader() {
+  const pathname = usePathname();
+  const active = pathname === "/games";
+  return (
+    <div className="flex items-center justify-between px-2.5 pb-1">
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Projects
+      </span>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Link
+              href="/games"
+              aria-label="All projects"
+              className={cn(
+                "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
+                active
+                  ? "text-primary"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              )}
+            >
+              <LayoutGrid className="size-3.5" />
+              All
+            </Link>
+          }
+        />
+        <TooltipContent>Browse all projects as a grid</TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -152,7 +200,7 @@ function DivisionSection({
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between px-2.5 pb-1.5">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
         <Tooltip>
@@ -160,10 +208,10 @@ function DivisionSection({
             render={
               <Link
                 href={`/games/new?division=${slug}`}
-                className="grid size-5 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                className="grid size-6 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 aria-label={`New ${label} project`}
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-4" />
               </Link>
             }
           />
@@ -171,7 +219,7 @@ function DivisionSection({
         </Tooltip>
       </div>
       {games.length === 0 ? (
-        <p className="px-2.5 py-1 text-xs text-muted-foreground">
+        <p className="px-2.5 py-1 text-sm text-muted-foreground">
           No projects yet.
         </p>
       ) : (
@@ -198,7 +246,7 @@ function SidequestSection({ sidequests }: { sidequests: Sidequest[] }) {
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between px-2.5 pb-1.5">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Sidequests
         </span>
         <Tooltip>
@@ -206,10 +254,10 @@ function SidequestSection({ sidequests }: { sidequests: Sidequest[] }) {
             render={
               <Link
                 href="/sidequests/new"
-                className="grid size-5 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                className="grid size-6 place-items-center rounded text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 aria-label="New sidequest"
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-4" />
               </Link>
             }
           />
@@ -218,7 +266,7 @@ function SidequestSection({ sidequests }: { sidequests: Sidequest[] }) {
       </div>
 
       {visible.length === 0 ? (
-        <p className="px-2.5 py-1 text-xs text-muted-foreground">
+        <p className="px-2.5 py-1 text-sm text-muted-foreground">
           No sidequests.
         </p>
       ) : (
@@ -238,7 +286,7 @@ function SidequestSection({ sidequests }: { sidequests: Sidequest[] }) {
         <button
           type="button"
           onClick={() => setShowClosed((v) => !v)}
-          className="mt-1 px-2.5 text-[11px] text-muted-foreground hover:text-foreground"
+          className="mt-1 px-2.5 text-xs text-muted-foreground hover:text-foreground"
         >
           {showClosed ? "Hide" : "Show"} closed quests ({closed.length})
         </button>
@@ -260,16 +308,16 @@ function GameGroup({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        className="flex w-full items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
       >
         <ChevronRight
           className={cn(
-            "size-3 transition-transform",
+            "size-3.5 transition-transform",
             open && "rotate-90",
           )}
         />
         {label}
-        <span className="ml-auto tabular-nums opacity-60">{games.length}</span>
+        <span className="ml-auto tabular-nums opacity-70">{games.length}</span>
       </button>
       {open ? (
         <div className="space-y-0.5 pb-1 pl-1.5">

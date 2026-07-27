@@ -64,7 +64,7 @@ export function SkillRadar({
         <PolarGrid stroke="var(--border)" />
         <PolarAngleAxis
           dataKey="skill"
-          tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 13 }}
         />
         <PolarRadiusAxis
           domain={[0, 4]}

@@ -38,7 +38,7 @@ export default function PreviewPage() {
 function Header() {
   return (
     <div className="text-center">
-      <p className="pixel-tag text-[color:var(--muted-foreground)]">— Missions —</p>
+      <p className="pixel-tag text-[color:var(--muted-foreground)]">— Quests —</p>
       <h1 className="mt-2 text-4xl font-bold tracking-wide text-foreground sm:text-5xl">
         The Codex of Quests
       </h1>

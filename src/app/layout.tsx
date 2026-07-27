@@ -1,37 +1,33 @@
 import type { Metadata, Viewport } from "next";
-import { Cinzel, EB_Garamond, VT323 } from "next/font/google";
+import { Barlow, Barlow_Semi_Condensed } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-// Fantasy/parchment type system:
-//   --font-display  → Cinzel (engraved-stone serif, headings & buttons)
-//   --font-sans     → EB Garamond (warm humanist serif, body)
-//   --font-mono     → VT323 (pixel mono, numbers / tags / "system" labels)
-const cinzel = Cinzel({
-  variable: "--font-display",
-  weight: ["500", "600", "700"],
-  subsets: ["latin"],
-});
-const garamond = EB_Garamond({
+// The Escape Game type system. DIN Next LT Pro is TEG's licensed brand
+// typeface; Barlow is the closest free grotesque and stands in for it here.
+//   --font-display  → Barlow Semi Condensed (headlines, Camel Case)
+//   --font-sans     → Barlow (body copy, UI)
+//   --font-mono     → system monospace (numbers / codes), set in globals.css
+const barlow = Barlow({
   variable: "--font-sans",
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
 });
-const vt323 = VT323({
-  variable: "--font-mono",
-  weight: "400",
+const barlowDisplay = Barlow_Semi_Condensed({
+  variable: "--font-display",
+  weight: ["600", "700"],
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: { default: "Missions", template: "%s · Missions" },
+  title: { default: "Quests", template: "%s · Quests" },
   description:
     "Project management and gamification for game design teams.",
-  applicationName: "Missions",
+  applicationName: "Quests",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Missions",
+    title: "Quests",
     statusBarStyle: "default",
   },
   // Explicit icons so Apple picks up the right home-screen image even
@@ -46,9 +42,9 @@ export const metadata: Metadata = {
   },
   // Used by iOS's "Add to Home Screen" preview and link unfurls.
   openGraph: {
-    title: "Missions",
+    title: "Quests",
     description: "Project management for The Escape Game design studio.",
-    siteName: "Missions",
+    siteName: "Quests",
   },
 };
 
@@ -56,8 +52,8 @@ export const viewport: Viewport = {
   // Match the parchment background so iOS Safari's status-bar tint blends
   // when the app is launched standalone from the home screen.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3e7c8" },
-    { media: "(prefers-color-scheme: dark)", color: "#2a1f15" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#191919" },
   ],
   // Important for PWAs — no zooming on input focus, full-width layout.
   width: "device-width",
@@ -74,7 +70,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${cinzel.variable} ${garamond.variable} ${vt323.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowDisplay.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
         <Providers>{children}</Providers>

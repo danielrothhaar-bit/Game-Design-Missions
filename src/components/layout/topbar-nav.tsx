@@ -2,61 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Briefcase,
-  LayoutDashboard,
-  Grid,
-  Users,
-  Shield,
-  type LucideIcon,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type Item = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  /** match only the exact path (otherwise the link is active for prefixes) */
-  exact?: boolean;
-};
-
-const ITEMS: Item[] = [
-  { href: "/my-work", label: "My Quests", icon: Briefcase, exact: true },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/games", label: "All Games", icon: Grid, exact: true },
-  { href: "/team", label: "Hall of Heroes", icon: Users, exact: true },
-];
-
-const ADMIN_ITEM: Item = {
-  href: "/admin",
-  label: "Admin",
-  icon: Shield,
-};
+import { navItemsFor, isActivePath } from "./nav-items";
 
 export function TopbarNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
-  const items = isAdmin ? [...ITEMS, ADMIN_ITEM] : ITEMS;
+  const items = navItemsFor(isAdmin);
 
   return (
-    <nav className="hidden items-center gap-0.5 md:flex">
+    <nav className="hidden items-center gap-1 md:flex">
       {items.map((it) => {
-        const active = it.exact
-          ? pathname === it.href
-          : pathname === it.href || pathname.startsWith(`${it.href}/`);
+        const active = isActivePath(pathname, it);
         const Icon = it.icon;
         return (
           <Link
             key={it.href}
             href={it.href}
             className={cn(
-              "group/topnav relative inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium uppercase tracking-[0.08em] transition-colors",
+              "group/topnav relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium uppercase tracking-[0.08em] transition-colors",
               "font-display",
               active
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Icon className="size-3.5" />
+            <Icon className="size-4" />
             <span>{it.label}</span>
             {active ? (
               <span

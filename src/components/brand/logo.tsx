@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
 /**
- * Missions mark. Tries to load the real PNG from /brand/logo.png (or
+ * Quests mark. Tries to load the real PNG from /brand/logo.png (or
  * /brand/logo-light.png in dark mode). If the file isn't on disk, falls
  * back to an inline SVG approximation so we always render something.
  *
@@ -21,7 +21,7 @@ function bitmapCandidates(dark: boolean): string[] {
 export function Logo({
   className,
   size = 32,
-  title = "Missions",
+  title = "Quests",
 }: {
   className?: string;
   size?: number;
@@ -95,7 +95,7 @@ function LogoSvg({
   );
 }
 
-/** Lockup: logo + word "MISSIONS" beside it. Used in the topbar. */
+/** Lockup: logo + word "QUESTS" beside it. Used in the topbar. */
 export function LogoLockup({
   className,
   size = 28,
@@ -106,8 +106,8 @@ export function LogoLockup({
   return (
     <span className={cn("flex items-center gap-2", className)}>
       <Logo size={size} />
-      <span className="font-display text-[15px] font-semibold tracking-[0.18em] uppercase text-foreground">
-        Missions
+      <span className="font-display text-[19px] font-bold tracking-[0.06em] uppercase text-foreground">
+        Quests
       </span>
     </span>
   );

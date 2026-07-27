@@ -50,120 +50,85 @@
 }
 
 /*
- * Fantasy / parchment palette — Elder-Scrolls-y light theme.
- * Warm cream backgrounds, dark sepia ink, burgundy accents, illuminated
- * gold trim. Hard 2px radii instead of pill-ish curves.
+ * The Escape Game brand palette.
+ * Primary: Cosmo Red (#FF4863). Neutrals: Cosmo White, Comic Graphite
+ * (#2B2B2B), Comic Fog (#E5E5E5). Accents drawn from the extended palette
+ * (Blue Handed, Turf Green, Hamilton Gold, Lilac). Clean, modern chrome —
+ * soft rounded corners, hairline borders, subtle shadows.
  */
 :root {
-  --background: oklch(0.93 0.035 80);          /* parchment cream */
-  --foreground: oklch(0.22 0.025 55);          /* dark ink */
-  --card: oklch(0.96 0.035 82);                /* lighter vellum */
-  --card-foreground: oklch(0.22 0.025 55);
-  --popover: oklch(0.96 0.035 82);
-  --popover-foreground: oklch(0.22 0.025 55);
-  --primary: oklch(0.38 0.13 25);              /* deep burgundy */
-  --primary-foreground: oklch(0.96 0.035 82);
-  --secondary: oklch(0.86 0.04 75);            /* aged tan */
-  --secondary-foreground: oklch(0.28 0.04 50);
-  --muted: oklch(0.90 0.03 78);
-  --muted-foreground: oklch(0.46 0.05 55);     /* sepia gray */
-  --accent: oklch(0.82 0.10 80);               /* faded gold */
-  --accent-foreground: oklch(0.22 0.025 55);
-  --destructive: oklch(0.45 0.18 28);          /* blood red */
-  --border: oklch(0.55 0.08 55);               /* warm brown trim */
-  --input: oklch(0.92 0.03 78);
-  --ring: oklch(0.62 0.13 75);                 /* gold focus ring */
-  --chart-1: oklch(0.45 0.16 30);              /* burgundy */
-  --chart-2: oklch(0.55 0.12 75);              /* gold */
-  --chart-3: oklch(0.42 0.10 145);             /* forest */
-  --chart-4: oklch(0.45 0.08 250);             /* dusk blue */
-  --chart-5: oklch(0.35 0.05 50);              /* dark sepia */
-  --radius: 2px;                                /* hard, etched corners */
-  --sidebar: oklch(0.89 0.05 70);              /* tanned leather */
-  --sidebar-foreground: oklch(0.22 0.025 55);
-  --sidebar-primary: oklch(0.38 0.13 25);
-  --sidebar-primary-foreground: oklch(0.96 0.035 82);
-  --sidebar-accent: oklch(0.83 0.06 75);
-  --sidebar-accent-foreground: oklch(0.22 0.025 55);
-  --sidebar-border: oklch(0.55 0.08 55);
-  --sidebar-ring: oklch(0.62 0.13 75);
+  --background: #ffffff;                 /* Cosmo White */
+  --foreground: #2b2b2b;                 /* Comic Graphite */
+  --card: #ffffff;
+  --card-foreground: #2b2b2b;
+  --popover: #ffffff;
+  --popover-foreground: #2b2b2b;
+  --primary: #ff4863;                    /* Cosmo Red */
+  --primary-foreground: #ffffff;
+  --secondary: #f2f2f2;                  /* light fog surface */
+  --secondary-foreground: #2b2b2b;
+  --muted: #f4f4f4;
+  --muted-foreground: #616161;           /* readable secondary ink */
+  --accent: #ffe6ea;                     /* blush-tinted hover */
+  --accent-foreground: #2b2b2b;
+  --destructive: #890e40;                /* Berry */
+  --border: #e5e5e5;                     /* Comic Fog */
+  --input: #ffffff;
+  --ring: #ff4863;
+  --chart-1: #ff4863;                    /* Cosmo Red */
+  --chart-2: #2455d1;                    /* Blue Handed */
+  --chart-3: #5da277;                    /* Turf Green */
+  --chart-4: #f2c255;                    /* Hamilton Gold */
+  --chart-5: #7a58cc;                    /* Lilac */
+  --radius: 10px;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #2b2b2b;
+  --sidebar-primary: #ff4863;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0f0f0;
+  --sidebar-accent-foreground: #2b2b2b;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #ff4863;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
 }
 
 /*
- * Dark theme — "dark stone & gold" RPG. Deep warm-slate backgrounds, aged
- * leather panels, glowing gold trim, blood-red primary, candle-warm text.
+ * Dark theme — Comic Graphite / Cosmo Black surfaces, Cosmo White ink,
+ * Cosmo Red accents.
  */
 .dark {
-  --background: oklch(0.16 0.018 55);          /* deep stone */
-  --foreground: oklch(0.92 0.04 80);           /* candlelit cream */
-  --card: oklch(0.22 0.022 55);                /* aged leather */
-  --card-foreground: oklch(0.92 0.04 80);
-  --popover: oklch(0.22 0.022 55);
-  --popover-foreground: oklch(0.92 0.04 80);
-  --primary: oklch(0.50 0.16 28);              /* glowing burgundy */
-  --primary-foreground: oklch(0.96 0.04 82);
-  --secondary: oklch(0.28 0.03 55);            /* slate inset */
-  --secondary-foreground: oklch(0.92 0.04 80);
-  --muted: oklch(0.25 0.025 55);
-  --muted-foreground: oklch(0.70 0.05 75);     /* faded gold */
-  --accent: oklch(0.55 0.12 80);               /* burnished gold */
-  --accent-foreground: oklch(0.16 0.018 55);
-  --destructive: oklch(0.58 0.20 28);
-  --border: oklch(0.55 0.12 75);               /* gold trim */
-  --input: oklch(0.28 0.03 55);
-  --ring: oklch(0.65 0.14 80);
-  --chart-1: oklch(0.55 0.18 28);
-  --chart-2: oklch(0.65 0.14 80);
-  --chart-3: oklch(0.55 0.14 145);
-  --chart-4: oklch(0.55 0.12 250);
-  --chart-5: oklch(0.45 0.06 50);
-  --sidebar: oklch(0.20 0.022 55);
-  --sidebar-foreground: oklch(0.92 0.04 80);
-  --sidebar-primary: oklch(0.50 0.16 28);
-  --sidebar-primary-foreground: oklch(0.96 0.04 82);
-  --sidebar-accent: oklch(0.28 0.03 55);
-  --sidebar-accent-foreground: oklch(0.92 0.04 80);
-  --sidebar-border: oklch(0.55 0.12 75);
-  --sidebar-ring: oklch(0.65 0.14 80);
-}
-
-/* Dark theme tweaks: replace the parchment noise overlay with a stone
- * texture so the body doesn't read as cream-tinted in dark mode. */
-.dark body {
-  background-image:
-    radial-gradient(at 20% 10%, oklch(0.22 0.03 55 / 0.6), transparent 60%),
-    radial-gradient(at 85% 80%, oklch(0.12 0.02 55 / 0.4), transparent 55%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92  0 0 0 0 0.80  0 0 0 0 0.50  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  background-blend-mode: screen, multiply, normal;
-}
-
-/* Dark mode panel gets a bronze inner highlight + dark trim. */
-.dark .fantasy-panel {
-  box-shadow:
-    inset 0 0 0 1px oklch(0.32 0.04 55),
-    inset 0 0 0 2px var(--border),
-    inset 0 0 0 3px oklch(0.45 0.10 70),
-    inset 0 0 0 4px var(--card),
-    0 1px 0 oklch(0 0 0 / 0.4);
-}
-.dark .fantasy-button {
-  background: linear-gradient(
-    180deg,
-    oklch(0.32 0.03 55) 0%,
-    oklch(0.24 0.025 55) 100%
-  );
-  color: var(--foreground);
-  box-shadow:
-    inset 0 1px 0 oklch(0.45 0.06 60),
-    inset 0 -1px 0 oklch(0.10 0.02 55),
-    0 1px 0 oklch(0 0 0 / 0.5);
-}
-.dark .fantasy-button[data-variant="primary"] {
-  background: linear-gradient(
-    180deg,
-    oklch(0.55 0.17 28) 0%,
-    oklch(0.38 0.14 25) 100%
-  );
+  --background: #191919;
+  --foreground: #f5f5f5;
+  --card: #242424;
+  --card-foreground: #f5f5f5;
+  --popover: #242424;
+  --popover-foreground: #f5f5f5;
+  --primary: #ff4863;
+  --primary-foreground: #ffffff;
+  --secondary: #303030;
+  --secondary-foreground: #f5f5f5;
+  --muted: #2b2b2b;
+  --muted-foreground: #a8a8a8;
+  --accent: #3a2a2e;                     /* dark rose hover */
+  --accent-foreground: #f5f5f5;
+  --destructive: #b3164f;
+  --border: #383838;
+  --input: #2b2b2b;
+  --ring: #ff4863;
+  --chart-1: #ff5f76;
+  --chart-2: #5f8bff;
+  --chart-3: #79c39a;
+  --chart-4: #f2c255;
+  --chart-5: #a98ce0;
+  --sidebar: #1f1f1f;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #ff4863;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2e2e2e;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #383838;
+  --sidebar-ring: #ff4863;
 }
 
 @layer base {
@@ -171,179 +136,48 @@
     @apply border-border outline-ring/50;
   }
   html {
-    font-family: var(--font-sans), Georgia, "Times New Roman", serif;
+    font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI",
+      Roboto, Helvetica, Arial, sans-serif;
   }
   body {
     @apply bg-background text-foreground;
-    /* Subtle paper-fiber noise so the parchment doesn't read as flat. */
-    background-image:
-      radial-gradient(at 20% 10%, oklch(0.97 0.05 85 / 0.6), transparent 60%),
-      radial-gradient(at 85% 80%, oklch(0.85 0.07 50 / 0.4), transparent 55%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.28  0 0 0 0 0.20  0 0 0 0 0.10  0 0 0 0.10 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-    background-blend-mode: multiply, multiply, normal;
   }
+  /* Headlines: DIN-style, Camel Case, left-justified, tight tracking. */
   h1, h2, h3, h4, h5 {
-    font-family: var(--font-display), Georgia, "Times New Roman", serif;
-    letter-spacing: 0.02em;
+    font-family: var(--font-display), system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    font-weight: 700;
   }
 }
 
-/* ── Fantasy chrome helpers ────────────────────────────────────────── */
-
-/* Illuminated double-line border that we layer onto cards/panels. */
-.fantasy-panel {
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  box-shadow:
-    inset 0 0 0 1px oklch(0.95 0.04 82),       /* inner highlight */
-    inset 0 0 0 2px var(--border),             /* dark trim */
-    inset 0 0 0 3px oklch(0.65 0.10 70),       /* gold band */
-    inset 0 0 0 4px var(--card),
-    0 1px 0 oklch(0.6 0.08 55 / 0.4);
-  border-radius: 2px;
-}
-
-/* Wax-seal-ish chunky button finish. */
-.fantasy-button {
-  font-family: var(--font-display), Georgia, serif;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
-  border: 1px solid var(--border);
-  background:
-    linear-gradient(
-      180deg,
-      oklch(0.92 0.04 82) 0%,
-      oklch(0.85 0.06 75) 100%
-    );
-  box-shadow:
-    inset 0 1px 0 oklch(0.98 0.03 85),
-    inset 0 -1px 0 oklch(0.55 0.08 55 / 0.6),
-    0 1px 0 oklch(0.4 0.06 50 / 0.4);
-  color: var(--foreground);
-}
-.fantasy-button:hover {
-  filter: brightness(1.05);
-}
-.fantasy-button[data-variant="primary"] {
-  background:
-    linear-gradient(
-      180deg,
-      oklch(0.50 0.16 28) 0%,
-      oklch(0.36 0.14 25) 100%
-    );
-  color: var(--primary-foreground);
-  text-shadow: 0 1px 0 oklch(0.20 0.10 25);
-}
-
-/* Pixel mono tag — uppercase VT323 chip for STATUS / LEVEL / etc. */
-.pixel-tag {
-  font-family: var(--font-mono), monospace;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.95rem;
-  line-height: 1;
-}
-
-/* Drop cap for the first letter of section descriptions, when applied. */
-.drop-cap::first-letter {
-  font-family: var(--font-display), serif;
-  font-weight: 700;
-  font-size: 3.2em;
-  float: left;
-  line-height: 0.85;
-  padding: 0.05em 0.12em 0 0;
-  color: var(--primary);
-}
-
-/* ── Auto-cascade: every Card gets the illuminated trim ───────────── */
+/* ── Cards: clean surface with a hairline border + soft shadow ─────── */
 [data-slot="card"] {
   background-color: var(--card);
-  /* layered insets = inner highlight + dark trim + gold band */
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   box-shadow:
-    inset 0 0 0 1px oklch(0.97 0.04 84),
-    inset 0 0 0 2px var(--border),
-    inset 0 0 0 3px oklch(0.65 0.11 75),
-    inset 0 0 0 4px var(--card),
-    0 1px 0 oklch(0.55 0.08 55 / 0.35);
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 1px 3px rgb(0 0 0 / 0.06);
 }
 .dark [data-slot="card"] {
-  box-shadow:
-    inset 0 0 0 1px oklch(0.32 0.04 55),
-    inset 0 0 0 2px var(--border),
-    inset 0 0 0 3px oklch(0.45 0.10 70),
-    inset 0 0 0 4px var(--card),
-    0 1px 0 oklch(0 0 0 / 0.4);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
 }
 [data-slot="card-title"] {
-  font-family: var(--font-display), Georgia, serif;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  font-weight: 700;
 }
 
-/* ── Auto-cascade: every Button gets the chunky engraved finish ───── */
+/* ── Buttons: reset the old engraved styling; colors come from the
+ *    component's own variant classes (bg-primary, etc.). ───────────── */
 [data-slot="button"] {
-  font-family: var(--font-display), Georgia, serif;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
-  border-radius: 2px;
-}
-[data-slot="button"][data-variant="default"] {
-  background: linear-gradient(
-    180deg,
-    oklch(0.50 0.16 28) 0%,
-    oklch(0.36 0.14 25) 100%
-  );
-  color: var(--primary-foreground);
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.22),
-    inset 0 -1px 0 oklch(0 0 0 / 0.30),
-    0 1px 0 oklch(0 0 0 / 0.20);
-  text-shadow: 0 1px 0 oklch(0.20 0.10 25);
-}
-[data-slot="button"][data-variant="outline"],
-[data-slot="button"][data-variant="secondary"],
-[data-slot="button"][data-variant="ghost"] {
-  background: linear-gradient(
-    180deg,
-    oklch(0.92 0.04 82) 0%,
-    oklch(0.85 0.06 75) 100%
-  );
-  color: var(--foreground);
-  box-shadow:
-    inset 0 1px 0 oklch(0.98 0.03 85),
-    inset 0 -1px 0 oklch(0.55 0.08 55 / 0.6),
-    0 1px 0 oklch(0.4 0.06 50 / 0.4);
-}
-.dark [data-slot="button"][data-variant="outline"],
-.dark [data-slot="button"][data-variant="secondary"],
-.dark [data-slot="button"][data-variant="ghost"] {
-  background: linear-gradient(
-    180deg,
-    oklch(0.32 0.03 55) 0%,
-    oklch(0.24 0.025 55) 100%
-  );
-  color: var(--foreground);
-  box-shadow:
-    inset 0 1px 0 oklch(0.45 0.06 60),
-    inset 0 -1px 0 oklch(0.10 0.02 55),
-    0 1px 0 oklch(0 0 0 / 0.5);
-}
-[data-slot="button"][data-variant="destructive"] {
-  background: linear-gradient(
-    180deg,
-    oklch(0.48 0.20 28) 0%,
-    oklch(0.32 0.16 25) 100%
-  );
-  color: oklch(0.96 0.04 82);
-}
-/* Pill-shaped chips (used by filter buttons) keep their rounded look. */
-[data-slot="button"][class*="rounded-full"],
-[class*="rounded-full"][role="button"] {
-  border-radius: 9999px;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 600;
 }
 
-/* Inputs pick up parchment styling. */
+/* Inputs: clean, brand-neutral. */
 [data-slot="input"],
 input[type="text"]:not([role="combobox"]),
 input[type="email"],
@@ -353,12 +187,62 @@ input[type="search"],
 textarea,
 select {
   background-color: var(--input);
-  border-color: var(--border);
-  border-radius: 2px;
-  box-shadow: inset 0 1px 0 oklch(0 0 0 / 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
-/* Decorative section divider — gold center diamond with hairlines. */
+/* ── Legacy helper classes (used by the /preview showcase) restyled to
+ *    the brand so nothing looks broken. ─────────────────────────────── */
+.pixel-tag {
+  font-family: var(--font-mono), monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.fantasy-panel {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 1px 3px rgb(0 0 0 / 0.06);
+}
+
+.fantasy-button {
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--secondary);
+  color: var(--foreground);
+}
+.fantasy-button:hover {
+  filter: brightness(0.97);
+}
+.fantasy-button[data-variant="primary"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
+
+/* Drop cap for section intros, when applied. */
+.drop-cap::first-letter {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 3.2em;
+  float: left;
+  line-height: 0.85;
+  padding: 0.05em 0.12em 0 0;
+  color: var(--primary);
+}
+
+/* Decorative section divider — brand-red center diamond with hairlines. */
 .fantasy-divider {
   display: flex;
   align-items: center;
@@ -382,6 +266,5 @@ select {
   width: 8px;
   height: 8px;
   transform: rotate(45deg);
-  background: oklch(0.65 0.13 75);
-  box-shadow: 0 0 0 1px var(--border);
+  background: var(--primary);
 }
