@@ -45,6 +45,15 @@ async function main() {
       sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_ref" text`,
     );
     await db.execute(
+      sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_sku" text`,
+    );
+    await db.execute(
+      sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_card_name" text`,
+    );
+    await db.execute(
+      sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_source_tab" text`,
+    );
+    await db.execute(
       sql`DO $$ BEGIN ALTER TABLE "task" ADD CONSTRAINT "task_designSuiteRef_unique" UNIQUE ("design_suite_ref"); EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL; END $$`,
     );
     await db.execute(

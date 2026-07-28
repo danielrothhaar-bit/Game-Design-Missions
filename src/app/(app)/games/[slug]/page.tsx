@@ -70,6 +70,9 @@ export default async function GameListPage({
     labels: t.labels.map((l) => ({
       label: { id: l.label.id, name: l.label.name, color: l.label.color },
     })),
+    designSuiteSku: t.designSuiteSku ?? null,
+    designSuiteCardName: t.designSuiteCardName ?? null,
+    designSuiteSourceTab: t.designSuiteSourceTab ?? null,
   }));
 
   return (

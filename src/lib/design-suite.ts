@@ -29,7 +29,8 @@ import {
 // instead of the API, breaking res.json().
 const BASE = (process.env.DESIGN_SUITE_URL ?? "").replace(/\/+$/, "");
 const KEY = process.env.DESIGN_SUITE_KEY ?? "";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
+// Strip trailing slash too, so the pmUrl we write back has no double slash.
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/+$/, "");
 
 export function designSuiteConfigured() {
   return Boolean(BASE && KEY);
@@ -42,8 +43,12 @@ type DesignSuiteAction = {
   gameName: string;
   description: string;
   assignee: string;
+  assigneeEmail: string;
   status: string;
   dueDate: string;
+  sku: string;
+  cardName: string;
+  sourceTab: string;
   completedAt: string | null;
   updatedAt: string | null;
   handedOff: boolean;
@@ -223,21 +228,34 @@ export async function runDesignSuiteSync(): Promise<SyncSummary> {
       continue;
     }
 
+    // Resolve the assignee to a Quests user by EMAIL. Prefer the email the
+    // Design Suite resolved from its own user record (identical emails across
+    // both apps); fall back to the manual name->email map for users whose GDS
+    // email isn't populated yet. Email match is case-insensitive.
     let assigneeUserId: string | null = null;
-    if (a.assignee) {
-      const email = emailByName.get(a.assignee);
-      if (email) {
-        const u = await db.query.users.findFirst({
-          where: eq(users.email, email),
-        });
-        assigneeUserId = u?.id ?? null;
-      }
+    const assigneeEmail = (
+      a.assigneeEmail?.trim() ||
+      emailByName.get(a.assignee) ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+    if (assigneeEmail) {
+      const u = await db.query.users.findFirst({
+        where: sql`lower(${users.email}) = ${assigneeEmail}`,
+      });
+      assigneeUserId = u?.id ?? null;
     }
 
     const title = (a.description || "Untitled action").slice(0, 280);
     const description =
       a.description && a.description.length > 280 ? a.description : null;
     const dueDate = a.dueDate ? new Date(a.dueDate) : null;
+    const dsContext = {
+      designSuiteSku: a.sku || null,
+      designSuiteCardName: a.cardName || null,
+      designSuiteSourceTab: a.sourceTab || null,
+    };
 
     const existing = await db.query.tasks.findFirst({
       where: eq(tasks.designSuiteRef, a.ref),
@@ -248,7 +266,7 @@ export async function runDesignSuiteSync(): Promise<SyncSummary> {
       // deliberately NOT part of this update.
       await db
         .update(tasks)
-        .set({ title, description, dueDate, updatedAt: new Date() })
+        .set({ title, description, dueDate, ...dsContext, updatedAt: new Date() })
         .where(eq(tasks.id, existing.id));
       summary.updated++;
       await ensureHandoff(a, existing.id, gameRow.slug);
@@ -272,6 +290,7 @@ export async function runDesignSuiteSync(): Promise<SyncSummary> {
         completedAt: a.completedAt ? new Date(a.completedAt) : null,
         position: nextPos,
         designSuiteRef: a.ref,
+        ...dsContext,
       })
       .returning();
     summary.created++;

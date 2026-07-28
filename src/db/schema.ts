@@ -380,6 +380,11 @@ export const tasks = pgTable("task", {
   // "<designSuiteGameId>:<actionId>". Unique so sync upserts are idempotent;
   // null for tasks created natively in Quests.
   designSuiteRef: text().unique(),
+  // Design Suite context, surfaced read-only on the task. SKU is only set for
+  // component-based actions (puzzles have none).
+  designSuiteSku: text(),
+  designSuiteCardName: text(),
+  designSuiteSourceTab: text(),
   createdAt: timestamp({ mode: "date", withTimezone: true })
     .notNull()
     .defaultNow(),
