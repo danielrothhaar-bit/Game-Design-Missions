@@ -238,14 +238,6 @@ export const userDivisions = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.divisionSlug] })],
 );
 
-// Maps a Game Design Suite assignee (stored there as a plain name string) to a
-// Quests user, by email. Populated in admin. On sync, an incoming action's
-// assignee name is looked up here, then resolved to a user via users.email.
-export const designSuiteUserMap = pgTable("design_suite_user_map", {
-  designSuiteName: varchar({ length: 120 }).primaryKey(),
-  email: text().notNull(),
-});
-
 /* ─────────────── phase task templates ─────────────── */
 
 export const phaseTemplates = pgTable("phase_template", {
@@ -316,10 +308,6 @@ export const games = pgTable(
       .notNull()
       .defaultNow(),
     archivedAt: timestamp({ mode: "date", withTimezone: true }),
-    // Links this project to a game in the Game Design Suite app so synced
-    // action items land in the right place. Auto-populated by name match on
-    // first sync; editable in admin. Unique: one DS game ↔ one Quests game.
-    designSuiteGameId: text().unique(),
   },
   (t) => [uniqueIndex("game_slug_idx").on(t.slug)],
 );
@@ -376,15 +364,6 @@ export const tasks = pgTable("task", {
   blockedReason: text(),
   createdById: text().references(() => users.id, { onDelete: "set null" }),
   closedById: text().references(() => users.id, { onDelete: "set null" }),
-  // Link back to the originating action in the Game Design Suite app, as
-  // "<designSuiteGameId>:<actionId>". Unique so sync upserts are idempotent;
-  // null for tasks created natively in Quests.
-  designSuiteRef: text().unique(),
-  // Design Suite context, surfaced read-only on the task. SKU is only set for
-  // component-based actions (puzzles have none).
-  designSuiteSku: text(),
-  designSuiteCardName: text(),
-  designSuiteSourceTab: text(),
   createdAt: timestamp({ mode: "date", withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -701,9 +680,6 @@ export const appConfig = pgTable("app_config", {
   // Set once the deploy step has derived cover colors from existing logos,
   // so the backfill never re-runs (and never clobbers manual color edits).
   logoColorsBackfilledAt: timestamp({ mode: "date", withTimezone: true }),
-  // Incremental-pull cursor for the Game Design Suite action sync: the
-  // `serverTime` returned by the last successful pull, passed back as `?since=`.
-  designSuiteSyncCursor: timestamp({ mode: "date", withTimezone: true }),
 });
 
 /* ────────────────────── relations ─────────────────────── */
@@ -858,4 +834,3 @@ export type AppConfig = typeof appConfig.$inferSelect;
 export type GameStatusOption = typeof gameStatusOptions.$inferSelect;
 export type UserSkill = typeof userSkills.$inferSelect;
 export type Division = typeof divisions.$inferSelect;
-export type DesignSuiteUserMap = typeof designSuiteUserMap.$inferSelect;

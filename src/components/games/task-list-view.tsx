@@ -50,9 +50,6 @@ type Task = {
   skills: TaskSkill[];
   assignees: { isPrimary: boolean; user: AssigneeUser }[];
   labels: { label: { id: string; name: string; color: string } }[];
-  designSuiteSku: string | null;
-  designSuiteCardName: string | null;
-  designSuiteSourceTab: string | null;
 };
 
 const STATUS_FILTERS: Status[] = [
@@ -331,9 +328,6 @@ export function TaskListView({
             skills: [],
             assignees: [],
             labels: [],
-            designSuiteSku: null,
-            designSuiteCardName: null,
-            designSuiteSourceTab: null,
           },
         ]);
       } catch {
@@ -686,23 +680,6 @@ function TaskRow({
                 {tl.label.name}
               </span>
             ))}
-          </div>
-        ) : null}
-        {task.designSuiteSku ||
-        task.designSuiteCardName ||
-        task.designSuiteSourceTab ? (
-          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 pl-1.5 text-xs text-muted-foreground">
-            {task.designSuiteSku ? (
-              <span className="rounded bg-muted px-1.5 py-0.5 font-mono">
-                {task.designSuiteSku}
-              </span>
-            ) : null}
-            {task.designSuiteCardName ? (
-              <span>{task.designSuiteCardName}</span>
-            ) : null}
-            {task.designSuiteSourceTab ? (
-              <span className="opacity-70">· {task.designSuiteSourceTab}</span>
-            ) : null}
           </div>
         ) : null}
       </div>

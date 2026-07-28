@@ -32,43 +32,6 @@ async function main() {
     } catch (err) {
       console.warn("⚠ snapshot failed (continuing):", err);
     }
-
-    // Pre-create the Game Design Suite integration objects idempotently.
-    // Adding a UNIQUE constraint to the already-populated `task` table makes
-    // `drizzle-kit push` throw an interactive "truncate table?" prompt that
-    // `--force` does NOT auto-answer, which aborts push in Railway's non-TTY
-    // build. Creating them here first means push sees no diff and never
-    // prompts. Constraint names MUST match Drizzle's generated names
-    // (table + JS property + "_unique") so push recognises them as present.
-    console.log("→ pre-applying Design Suite integration schema");
-    await db.execute(
-      sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_ref" text`,
-    );
-    await db.execute(
-      sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_sku" text`,
-    );
-    await db.execute(
-      sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_card_name" text`,
-    );
-    await db.execute(
-      sql`ALTER TABLE "task" ADD COLUMN IF NOT EXISTS "design_suite_source_tab" text`,
-    );
-    await db.execute(
-      sql`DO $$ BEGIN ALTER TABLE "task" ADD CONSTRAINT "task_designSuiteRef_unique" UNIQUE ("design_suite_ref"); EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL; END $$`,
-    );
-    await db.execute(
-      sql`ALTER TABLE "game" ADD COLUMN IF NOT EXISTS "design_suite_game_id" text`,
-    );
-    await db.execute(
-      sql`DO $$ BEGIN ALTER TABLE "game" ADD CONSTRAINT "game_designSuiteGameId_unique" UNIQUE ("design_suite_game_id"); EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL; END $$`,
-    );
-    await db.execute(
-      sql`ALTER TABLE "app_config" ADD COLUMN IF NOT EXISTS "design_suite_sync_cursor" timestamp with time zone`,
-    );
-    await db.execute(
-      sql`CREATE TABLE IF NOT EXISTS "design_suite_user_map" ("design_suite_name" varchar(120) PRIMARY KEY NOT NULL, "email" text NOT NULL)`,
-    );
-    console.log("✓ Design Suite integration schema ready");
   }
 
   // `--force` lets push apply changes non-interactively. Destructive changes
